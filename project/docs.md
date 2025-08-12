@@ -1,4 +1,3 @@
-```markdown
 # 📘 StoryBridge – Official Project Documentation
 
 ## 1. Introduction / Overview
@@ -191,20 +190,20 @@ The system **should** maintain a modular, easily updatable codebase architecture
 ## 13. Deployment & Installation
 
 ### Development Setup
-\```bash
+```bash
 # Prerequisites: Node.js 18+, PNPM
 git clone [repository-url]
 cd storybridge
 pnpm install
 pnpm dev
-\```
+```
 
 ### Production Deployment
 - **Hosting**: Vercel, Netlify, or Firebase Hosting
 - **Build Process**: 
-  \```bash
+  ```bash
   pnpm build && pnpm export
-  \```
+  ```
 - **Environment**: Serverless functions with CDN distribution
 
 ## 14. Testing & Quality Assurance
@@ -273,4 +272,3 @@ pnpm dev
 ---
 
 *This document serves as the complete technical and functional specification for the StoryBridge platform. For implementation details and API documentation, refer to the technical appendices and developer guides.*
-```
