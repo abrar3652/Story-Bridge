@@ -475,6 +475,7 @@ class StoryBridgeAPITester:
             headers=headers
         )
         return success
+    def test_get_narrator_narrations(self, user_type="narrator"):
         """Test getting narrator's narrations"""
         if user_type not in self.tokens:
             print(f"❌ No token for {user_type}")
