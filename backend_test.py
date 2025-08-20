@@ -237,19 +237,21 @@ class StoryBridgeAPITester:
             
         headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
         
-        # Test with text narration (no file upload for simplicity)
-        narration_data = {
+        # Test with form data as expected by the endpoint
+        form_data = {
             "story_id": self.stories[0]['id'],
             "text": "This is a test narration text for the story."
         }
         
+        # Use form data instead of JSON
         success, response = self.run_test(
             f"Create narration ({user_type})",
             "POST",
             "narrations",
             200,
-            data=narration_data,
-            headers=headers
+            data=form_data,
+            headers=headers,
+            files={}  # This will trigger form data handling
         )
         return success
 
