@@ -256,7 +256,225 @@ class StoryBridgeAPITester:
         )
         return success
 
-    def test_get_narrator_narrations(self, user_type="narrator"):
+    def test_admin_mfa_signup(self, email, password):
+        """Test admin signup with MFA"""
+        success, response = self.run_test(
+            "Admin Signup with MFA",
+            "POST",
+            "auth/signup",
+            200,
+            data={"email": email, "password": password, "role": "admin"}
+        )
+        if success and 'access_token' in response:
+            self.tokens['admin'] = response['access_token']
+            self.users['admin'] = response['user']
+            return True
+        return False
+
+    def test_admin_mfa_login(self, email, password):
+        """Test admin login with MFA (using default secret)"""
+        # First try login without OTP (should fail)
+        success, response = self.run_test(
+            "Admin Login without OTP (should fail)",
+            "POST",
+            "auth/login",
+            401,  # Should fail
+            data={"email": email, "password": password}
+        )
+        
+        # Now try with OTP using the default admin secret
+        totp = pyotp.TOTP("STORYBRIDGE2025ADMINSECRET")
+        otp_code = totp.now()
+        
+        success, response = self.run_test(
+            "Admin Login with OTP",
+            "POST",
+            "auth/login",
+            200,
+            data={"email": email, "password": password, "otp_code": otp_code}
+        )
+        
+        if success and 'access_token' in response:
+            self.tokens['admin'] = response['access_token']
+            self.users['admin'] = response['user']
+            return True
+        return False
+
+    def test_admin_dedicated_login(self, email, password):
+        """Test dedicated admin login endpoint"""
+        totp = pyotp.TOTP("STORYBRIDGE2025ADMINSECRET")
+        otp_code = totp.now()
+        
+        success, response = self.run_test(
+            "Admin Dedicated Login",
+            "POST",
+            "auth/admin/login",
+            200,
+            data={"email": email, "password": password, "otp_code": otp_code}
+        )
+        
+        if success and 'access_token' in response:
+            self.tokens['admin'] = response['access_token']
+            self.users['admin'] = response['user']
+            return True
+        return False
+
+    def test_get_pending_content(self):
+        """Test admin getting pending content"""
+        if 'admin' not in self.tokens:
+            print("❌ No admin token")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens["admin"]}'}
+        success, response = self.run_test(
+            "Get pending content (admin)",
+            "GET",
+            "admin/pending",
+            200,
+            headers=headers
+        )
+        return success
+
+    def test_approve_content(self, content_id, content_type):
+        """Test admin approving content"""
+        if 'admin' not in self.tokens:
+            print("❌ No admin token")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens["admin"]}'}
+        success, response = self.run_test(
+            f"Approve {content_type} (admin)",
+            "PATCH",
+            f"admin/content/{content_id}/approve?content_type={content_type}&feedback=Approved via API test",
+            200,
+            headers=headers
+        )
+        return success
+
+    def test_reject_content(self, content_id, content_type):
+        """Test admin rejecting content"""
+        if 'admin' not in self.tokens:
+            print("❌ No admin token")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens["admin"]}'}
+        success, response = self.run_test(
+            f"Reject {content_type} (admin)",
+            "PATCH",
+            f"admin/content/{content_id}/reject?content_type={content_type}&feedback=Rejected via API test",
+            200,
+            headers=headers
+        )
+        return success
+
+    def test_get_all_users(self):
+        """Test admin getting all users"""
+        if 'admin' not in self.tokens:
+            print("❌ No admin token")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens["admin"]}'}
+        success, response = self.run_test(
+            "Get all users (admin)",
+            "GET",
+            "admin/users",
+            200,
+            headers=headers
+        )
+        return success
+
+    def test_ngo_analytics(self, user_type="end_user"):
+        """Test NGO analytics dashboard"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        success, response = self.run_test(
+            f"Get NGO analytics ({user_type})",
+            "GET",
+            "analytics/ngo",
+            200,
+            headers=headers
+        )
+        return success
+
+    def test_tprs_story_validation(self, user_type="creator"):
+        """Test TPRS compliance validation in story creation"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        
+        # Create a TPRS compliant story (vocabulary repeated 7+ times)
+        compliant_story = {
+            "title": "TPRS Compliant Story",
+            "text": "The brave cat was brave. The brave cat walked bravely. The brave cat was very brave indeed. The brave cat showed courage. The brave cat was brave every day. The brave cat was the most brave cat. The brave cat was brave and strong. The brave cat was brave in the forest.",
+            "language": "en",
+            "age_group": "4-6",
+            "vocabulary": ["brave", "cat"],
+            "quizzes": [
+                {
+                    "type": "true_false",
+                    "question": "The cat was brave?",
+                    "answer": True
+                }
+            ]
+        }
+        
+        success, response = self.run_test(
+            f"Create TPRS compliant story ({user_type})",
+            "POST",
+            "stories",
+            200,
+            data=compliant_story,
+            headers=headers
+        )
+        
+        if success and 'status' in response:
+            print(f"   Story status: {response['status']}")
+            print(f"   TPRS score: {response.get('tprs_score', 'N/A')}")
+        
+        return success
+
+    def test_update_profile(self, user_type="end_user"):
+        """Test updating user profile"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        profile_data = {
+            "language": "ar",
+            "avatar": "test_avatar_url"
+        }
+        
+        success, response = self.run_test(
+            f"Update profile ({user_type})",
+            "PUT",
+            "auth/profile",
+            200,
+            data=profile_data,
+            headers=headers
+        )
+        return success
+
+    def test_delete_account(self, user_type="end_user"):
+        """Test GDPR compliant account deletion"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        success, response = self.run_test(
+            f"Delete account ({user_type})",
+            "DELETE",
+            "auth/me",
+            200,
+            headers=headers
+        )
+        return success
         """Test getting narrator's narrations"""
         if user_type not in self.tokens:
             print(f"❌ No token for {user_type}")
