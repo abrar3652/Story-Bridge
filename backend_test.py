@@ -282,9 +282,19 @@ class StoryBridgeAPITester:
             data={"email": email, "password": password}
         )
         
-        # Now try with OTP using the default admin secret
-        totp = pyotp.TOTP("STORYBRIDGE2025ADMINSECRET")
-        otp_code = totp.now()
+        # Now try with OTP using a proper base32 secret
+        # Convert the admin secret to proper base32 format
+        import base64
+        try:
+            # Try to use the secret as-is first
+            totp = pyotp.TOTP("STORYBRIDGE2025ADMINSECRET")
+            otp_code = totp.now()
+        except:
+            # If that fails, create a proper base32 secret
+            secret_bytes = "STORYBRIDGE2025ADMINSECRET".encode('utf-8')
+            b32_secret = base64.b32encode(secret_bytes).decode('utf-8')
+            totp = pyotp.TOTP(b32_secret)
+            otp_code = totp.now()
         
         success, response = self.run_test(
             "Admin Login with OTP",
@@ -302,8 +312,15 @@ class StoryBridgeAPITester:
 
     def test_admin_dedicated_login(self, email, password):
         """Test dedicated admin login endpoint"""
-        totp = pyotp.TOTP("STORYBRIDGE2025ADMINSECRET")
-        otp_code = totp.now()
+        import base64
+        try:
+            totp = pyotp.TOTP("STORYBRIDGE2025ADMINSECRET")
+            otp_code = totp.now()
+        except:
+            secret_bytes = "STORYBRIDGE2025ADMINSECRET".encode('utf-8')
+            b32_secret = base64.b32encode(secret_bytes).decode('utf-8')
+            totp = pyotp.TOTP(b32_secret)
+            otp_code = totp.now()
         
         success, response = self.run_test(
             "Admin Dedicated Login",
