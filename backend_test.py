@@ -187,7 +187,9 @@ class StoryBridgeAPITester:
             return False
             
         headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        # Note: user_id should be set automatically by backend from token
         progress_data = {
+            "user_id": self.users[user_type]['id'],  # Include user_id as required by model
             "story_id": self.stories[0]['id'],
             "completed": True,
             "time_spent": 120,
