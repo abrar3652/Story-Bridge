@@ -251,7 +251,7 @@ class StoryBridgeAPITester:
             200,
             data=form_data,
             headers=headers,
-            files={}  # This will trigger form data handling
+            form_data=True
         )
         return success
 
