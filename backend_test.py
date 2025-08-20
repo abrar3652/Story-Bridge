@@ -13,7 +13,7 @@ class StoryBridgeAPITester:
         self.tests_run = 0
         self.tests_passed = 0
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None, files=None):
+    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None, files=None, form_data=False):
         """Run a single API test"""
         url = f"{self.api_url}/{endpoint}"
         test_headers = {'Content-Type': 'application/json'}
@@ -29,7 +29,7 @@ class StoryBridgeAPITester:
             if method == 'GET':
                 response = requests.get(url, headers=test_headers)
             elif method == 'POST':
-                if files:
+                if files is not None or form_data:
                     # Remove Content-Type for multipart/form-data
                     test_headers.pop('Content-Type', None)
                     response = requests.post(url, data=data, files=files, headers=test_headers)
