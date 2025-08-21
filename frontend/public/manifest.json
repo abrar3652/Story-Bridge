@@ -1,0 +1,28 @@
+{
+  "name": "StoryBridge - Interactive Educational Stories",
+  "short_name": "StoryBridge",
+  "description": "Interactive audio stories that make learning fun for children aged 4-10",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512x512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#f97316",
+  "background_color": "#fef3c7",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "kids", "stories"]
+}
