@@ -62,7 +62,7 @@
     "react-swipeable": "^7.0.2",
     "recharts": "^2.12.2",
     "papaparse": "^5.4.1",
-    "qrcode.react": "^4.2.2",
+    "qrcode.react": "^4.1.0",
     "react-wordcloud": "^1.2.7"
   },
   "scripts": {
