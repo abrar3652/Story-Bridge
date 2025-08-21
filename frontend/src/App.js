@@ -933,4 +933,1001 @@ const StoryPlayer = ({ story, onComplete }) => {
 };
 
 // Continue with the rest of the enhanced components...
-// This is getting quite large, so I'll split into multiple parts
+// Enhanced End User Dashboard with offline support
+const EndUserDashboard = () => {
+  const [stories, setStories] = useState([]);
+  const [selectedStory, setSelectedStory] = useState(null);
+  const [userProgress, setUserProgress] = useState([]);
+  const [totalCoins, setTotalCoins] = useState(0);
+  const [badges, setBadges] = useState([]);
+  const [ageFilter, setAgeFilter] = useState('all');
+  const [loading, setLoading] = useState(false);
+  
+  const { user, isOnline, storage } = useAuth();
+  const { toast } = useToast();
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [user]);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchStories(),
+        fetchProgress(),
+        loadCoinsAndBadges()
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStories = async () => {
+    try {
+      if (isOnline) {
+        // Fetch from server
+        const response = await axios.get(`${API}/stories`);
+        setStories(response.data);
+        
+        // Cache stories offline
+        for (const story of response.data) {
+          await storage.cacheStory(story);
+        }
+      } else {
+        // Load from cache
+        const cachedStories = await storage.getCachedStories();
+        setStories(cachedStories);
+      }
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+      // Fallback to cached stories
+      const cachedStories = await storage.getCachedStories();
+      setStories(cachedStories);
+    }
+  };
+
+  const fetchProgress = async () => {
+    try {
+      if (isOnline) {
+        const response = await axios.get(`${API}/progress/user`);
+        setUserProgress(response.data);
+      } else {
+        const offlineProgress = await storage.getProgress(user.id);
+        setUserProgress(Array.isArray(offlineProgress) ? offlineProgress : []);
+      }
+    } catch (error) {
+      console.error('Error fetching progress:', error);
+      const offlineProgress = await storage.getProgress(user.id);
+      setUserProgress(Array.isArray(offlineProgress) ? offlineProgress : []);
+    }
+  };
+
+  const loadCoinsAndBadges = async () => {
+    try {
+      const coins = await storage.getCoins(user.id);
+      const userBadges = await storage.getBadges(user.id);
+      
+      setTotalCoins(coins);
+      setBadges(userBadges);
+    } catch (error) {
+      console.error('Error loading coins/badges:', error);
+    }
+  };
+
+  const handleStoryComplete = async (coinsEarned) => {
+    const newTotal = await storage.addCoins(user.id, coinsEarned);
+    setTotalCoins(newTotal);
+    setSelectedStory(null);
+    
+    // Refresh progress
+    await fetchProgress();
+    
+    // Check for new badges
+    checkNewBadges();
+    
+    toast({
+      title: t('progress.story_completed'),
+      description: t('progress.earned_coins', { coins: coinsEarned }),
+    });
+  };
+
+  const checkNewBadges = async () => {
+    const completedStories = userProgress.filter(p => p.completed).length;
+    const vocabulary = await storage.getVocab(user.id);
+    const learnedWords = vocabulary.filter(v => v.learned).length;
+    
+    const newBadges = [];
+    
+    if (completedStories >= 1 && !badges.includes('story_starter')) {
+      newBadges.push('story_starter');
+    }
+    if (learnedWords >= 10 && !badges.includes('word_wizard')) {
+      newBadges.push('word_wizard');
+    }
+    if (completedStories >= 5 && !badges.includes('quiz_master')) {
+      newBadges.push('quiz_master');
+    }
+    
+    if (newBadges.length > 0) {
+      const updatedBadges = [...badges, ...newBadges];
+      setBadges(updatedBadges);
+      await storage.saveBadges(user.id, updatedBadges);
+      
+      newBadges.forEach(badge => {
+        toast({
+          title: t('progress.new_badge'),
+          description: `${t(`progress.${badge}`)} earned!`,
+        });
+      });
+    }
+  };
+
+  const filteredStories = stories.filter(story => 
+    ageFilter === 'all' || story.age_group === ageFilter
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Book className="w-16 h-16 mx-auto text-orange-500 mb-4 animate-spin" />
+          <p>{t('action.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedStory) {
+    return <StoryPlayer story={selectedStory} onComplete={handleStoryComplete} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Offline Indicator */}
+        {!isOnline && (
+          <motion.div 
+            className="bg-orange-100 border border-orange-400 rounded-lg p-3 mb-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="flex items-center justify-center">
+              <WifiOff className="w-4 h-4 mr-2 text-orange-600" />
+              <span className="text-orange-800">{t('message.offline_mode')}</span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Header */}
+        <motion.div 
+          className="flex justify-between items-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">{t('dashboard.story_library')}</h1>
+            <p className="text-gray-600">{t('dashboard.choose_story')}</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <motion.div 
+              className="flex items-center space-x-2 bg-yellow-100 px-4 py-2 rounded-full"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Coins className="w-5 h-5 text-yellow-600" />
+              <span className="font-semibold text-yellow-700">{totalCoins}</span>
+            </motion.div>
+            <div className="flex items-center space-x-2">
+              {badges.map((badge, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Badge className="bg-purple-100 text-purple-800">
+                    <Trophy className="w-4 h-4 mr-1" />
+                    {t(`progress.${badge}`)}
+                  </Badge>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Age Filter */}
+        <motion.div 
+          className="mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Select value={ageFilter} onValueChange={setAgeFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder={t('stories.age_filter')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('stories.all_ages')}</SelectItem>
+              <SelectItem value="4-6">{t('stories.ages_4_6')}</SelectItem>
+              <SelectItem value="7-10">{t('stories.ages_7_10')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </motion.div>
+
+        {/* Stories Grid */}
+        <motion.div 
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <AnimatePresence>
+            {filteredStories.map((story, index) => {
+              const progress = userProgress.find(p => p.story_id === story.id);
+              const isCompleted = progress?.completed || false;
+              
+              return (
+                <motion.div
+                  key={story.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                >
+                  <Card className="cursor-pointer hover:shadow-lg transition-all duration-300">
+                    <CardContent className="p-6" onClick={() => setSelectedStory(story)}>
+                      <div className="text-center">
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Book className="w-16 h-16 mx-auto text-orange-500 mb-4" />
+                        </motion.div>
+                        <h3 className="text-lg font-semibold mb-2">{story.title}</h3>
+                        <Badge variant="secondary" className="mb-3">{story.age_group} years</Badge>
+                        
+                        {isCompleted && (
+                          <motion.div 
+                            className="flex items-center justify-center text-green-600 mb-2"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                          >
+                            <Trophy className="w-4 h-4 mr-1" />
+                            <span className="text-sm">{t('stories.completed')}</span>
+                          </motion.div>
+                        )}
+                        
+                        <div className="flex flex-wrap justify-center gap-1 mb-4">
+                          {story.vocabulary.slice(0, 3).map((word, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {word}
+                            </Badge>
+                          ))}
+                        </div>
+                        
+                        <Button className="w-full">
+                          {isCompleted ? t('stories.play_again') : t('stories.start_story')}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Download More Stories Button */}
+        {isOnline && (
+          <motion.div 
+            className="text-center mt-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Button 
+              onClick={fetchStories}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download More Stories</span>
+            </Button>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Creator Dashboard
+const CreatorDashboard = () => {
+  const [stories, setStories] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingStory, setEditingStory] = useState(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    text: '',
+    language: 'en',
+    age_group: '4-6',
+    vocabulary: '',
+    quizzes: ''
+  });
+  
+  const { toast } = useToast();
+  const { t } = useTranslation();
+  const { isOnline } = useAuth();
+
+  useEffect(() => {
+    fetchCreatorStories();
+  }, []);
+
+  const fetchCreatorStories = async () => {
+    try {
+      const response = await axios.get(`${API}/stories/creator`);
+      setStories(response.data);
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+      toast({
+        title: t('error.general'),
+        description: t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!isOnline) {
+      toast({
+        title: t('error.network'),
+        description: t('message.offline_mode'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const storyData = {
+        ...formData,
+        vocabulary: formData.vocabulary.split(',').map(w => w.trim()).filter(w => w),
+        quizzes: formData.quizzes ? JSON.parse(formData.quizzes) : []
+      };
+      
+      if (editingStory) {
+        await axios.put(`${API}/stories/${editingStory.id}`, storyData);
+        toast({
+          title: "Story updated!",
+          description: "Your story has been updated successfully.",
+        });
+      } else {
+        await axios.post(`${API}/stories`, storyData);
+        toast({
+          title: t('message.story_created'),
+          description: t('message.story_submitted'),
+        });
+      }
+      
+      resetForm();
+      fetchCreatorStories();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEdit = (story) => {
+    setEditingStory(story);
+    setFormData({
+      title: story.title,
+      text: story.text,
+      language: story.language,
+      age_group: story.age_group,
+      vocabulary: story.vocabulary.join(', '),
+      quizzes: JSON.stringify(story.quizzes, null, 2)
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (storyId) => {
+    if (!window.confirm('Are you sure you want to delete this story?')) return;
+    
+    try {
+      await axios.delete(`${API}/stories/${storyId}`);
+      toast({
+        title: "Story deleted",
+        description: "Story has been removed successfully.",
+      });
+      fetchCreatorStories();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingStory(null);
+    setFormData({
+      title: '',
+      text: '',
+      language: 'en',
+      age_group: '4-6',
+      vocabulary: '',
+      quizzes: ''
+    });
+  };
+
+  if (showForm) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {editingStory ? 'Edit Story' : t('stories.create_new')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="title">{t('stories.story_title')}</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="age_group">{t('stories.age_group')}</Label>
+                      <Select value={formData.age_group} onValueChange={(value) => setFormData({...formData, age_group: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="4-6">{t('stories.ages_4_6')}</SelectItem>
+                          <SelectItem value="7-10">{t('stories.ages_7_10')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="text">{t('stories.story_text')}</Label>
+                    <Textarea
+                      id="text"
+                      value={formData.text}
+                      onChange={(e) => setFormData({...formData, text: e.target.value})}
+                      rows={8}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="vocabulary">{t('stories.vocabulary')}</Label>
+                    <Input
+                      id="vocabulary"
+                      value={formData.vocabulary}
+                      onChange={(e) => setFormData({...formData, vocabulary: e.target.value})}
+                      placeholder="brave, sparrow, fly, courage"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="quizzes">{t('stories.quizzes')}</Label>
+                    <Textarea
+                      id="quizzes"
+                      value={formData.quizzes}
+                      onChange={(e) => setFormData({...formData, quizzes: e.target.value})}
+                      rows={4}
+                      placeholder='[{"type": "true_false", "question": "The sparrow was brave?", "answer": true}]'
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-4">
+                    <Button type="submit">
+                      {editingStory ? 'Update Story' : t('stories.create_story')}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      {t('stories.cancel')}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
+      <div className="max-w-6xl mx-auto">
+        <motion.div 
+          className="flex justify-between items-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">{t('dashboard.creator_dashboard')}</h1>
+            <p className="text-gray-600">{t('dashboard.manage_stories')}</p>
+          </div>
+          <Button onClick={() => setShowForm(true)} disabled={!isOnline}>
+            {t('stories.create_new')}
+          </Button>
+        </motion.div>
+
+        <motion.div 
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          {stories.map((story, index) => (
+            <motion.div
+              key={story.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ y: -5 }}
+            >
+              <Card>
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <Book className="w-12 h-12 mx-auto text-purple-500 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">{story.title}</h3>
+                    <Badge 
+                      variant={
+                        story.status === 'published' ? 'default' : 
+                        story.status === 'pending' ? 'secondary' : 
+                        story.status === 'rejected' ? 'destructive' : 'outline'
+                      }
+                      className="mb-3"
+                    >
+                      {t(`status.${story.status}`)}
+                    </Badge>
+                    <p className="text-sm text-gray-600 mb-3">
+                      {story.text.substring(0, 100)}...
+                    </p>
+                    {story.status === 'rejected' && story.review_notes && (
+                      <p className="text-sm text-red-600 mb-3 italic">
+                        {story.review_notes}
+                      </p>
+                    )}
+                    <div className="flex justify-center space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEdit(story)}
+                        disabled={story.status === 'published'}
+                      >
+                        {t('action.edit')}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDelete(story.id)}
+                        disabled={story.status !== 'draft'}
+                      >
+                        {t('action.delete')}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// Enhanced Narrator Dashboard
+const NarratorDashboard = () => {
+  const [stories, setStories] = useState([]);
+  const [narrations, setNarrations] = useState([]);
+  const [selectedStory, setSelectedStory] = useState(null);
+  const [audioFile, setAudioFile] = useState(null);
+  const [voiceText, setVoiceText] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [recordedBlobs, setRecordedBlobs] = useState([]);
+  
+  const { toast } = useToast();
+  const { t } = useTranslation();
+  const { isOnline } = useAuth();
+
+  useEffect(() => {
+    fetchStories();
+    fetchNarrations();
+  }, []);
+
+  const fetchStories = async () => {
+    try {
+      const response = await axios.get(`${API}/stories?status=published`);
+      setStories(response.data);
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    }
+  };
+
+  const fetchNarrations = async () => {
+    try {
+      const response = await axios.get(`${API}/narrations/narrator`);
+      setNarrations(response.data);
+    } catch (error) {
+      console.error('Error fetching narrations:', error);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      
+      const blobs = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          blobs.push(event.data);
+        }
+      };
+      
+      recorder.onstop = () => {
+        const audioBlob = new Blob(blobs, { type: 'audio/webm' });
+        const audioFile = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
+        setAudioFile(audioFile);
+        setRecordedBlobs(blobs);
+      };
+      
+      setMediaRecorder(recorder);
+      recorder.start();
+      setIsRecording(true);
+      
+      toast({
+        title: "Recording started",
+        description: "Speak clearly into your microphone",
+      });
+    } catch (error) {
+      toast({
+        title: "Recording error",
+        description: "Could not access microphone",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+      setMediaRecorder(null);
+    }
+  };
+
+  const handleSubmitNarration = async () => {
+    if (!selectedStory) return;
+    
+    if (!isOnline) {
+      toast({
+        title: t('error.network'),
+        description: t('message.offline_mode'),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const formData = new FormData();
+      formData.append('story_id', selectedStory.id);
+      
+      if (audioFile) {
+        formData.append('audio', audioFile);
+      }
+      if (voiceText) {
+        formData.append('text', voiceText);
+      }
+      
+      await axios.post(`${API}/narrations`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      toast({
+        title: "Narration submitted!",
+        description: t('message.narration_submitted'),
+      });
+      
+      // Reset form
+      setSelectedStory(null);
+      setAudioFile(null);
+      setVoiceText('');
+      setRecordedBlobs([]);
+      
+      fetchNarrations();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startVoiceRecognition = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      recognition.onstart = () => {
+        setIsRecording(true);
+        toast({
+          title: "Listening...",
+          description: "Speak now for voice-to-text",
+        });
+      };
+      
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          setVoiceText(prev => prev + ' ' + finalTranscript);
+        }
+      };
+      
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+      
+      recognition.onerror = () => {
+        setIsRecording(false);
+        toast({
+          title: "Voice recognition error",
+          description: "Could not process speech",
+          variant: "destructive",
+        });
+      };
+      
+      recognition.start();
+    } else {
+      toast({
+        title: "Not supported",
+        description: "Speech recognition is not supported in your browser.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100 p-4">
+      <div className="max-w-6xl mx-auto">
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl font-bold text-gray-800">{t('dashboard.narrator_dashboard')}</h1>
+          <p className="text-gray-600">{t('dashboard.add_voice')}</p>
+        </motion.div>
+
+        <Tabs defaultValue="stories" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="stories">{t('narration.stories_to_narrate')}</TabsTrigger>
+            <TabsTrigger value="narrations">{t('narration.my_narrations')}</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="stories">
+            <motion.div 
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {stories.map((story, index) => {
+                const hasNarration = narrations.some(n => n.story_id === story.id);
+                
+                return (
+                  <motion.div
+                    key={story.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -5 }}
+                  >
+                    <Card className={selectedStory?.id === story.id ? 'ring-2 ring-blue-500' : ''}>
+                      <CardContent className="p-6">
+                        <div className="text-center">
+                          <Mic className="w-12 h-12 mx-auto text-green-500 mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">{story.title}</h3>
+                          <Badge variant="secondary" className="mb-3">{story.age_group} years</Badge>
+                          {hasNarration && (
+                            <Badge className="mb-3 bg-green-100 text-green-800">
+                              {t('narration.already_narrated')}
+                            </Badge>
+                          )}
+                          <p className="text-sm text-gray-600 mb-4">
+                            {story.text.substring(0, 100)}...
+                          </p>
+                          <Button 
+                            onClick={() => setSelectedStory(story)}
+                            disabled={hasNarration || !isOnline}
+                          >
+                            {hasNarration ? t('narration.narrated') : t('narration.select_to_narrate')}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+            
+            {selectedStory && (
+              <motion.div
+                className="mt-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('narration.add_narration_for', { title: selectedStory.title })}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <Label>{t('narration.story_text_to_narrate')}</Label>
+                      <div className="bg-gray-50 p-4 rounded-lg mt-2 max-h-40 overflow-y-auto">
+                        <p className="text-gray-700">{selectedStory.text}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="audio">{t('narration.upload_audio')}</Label>
+                        <div className="space-y-3 mt-2">
+                          <Input
+                            id="audio"
+                            type="file"
+                            accept="audio/*"
+                            onChange={(e) => setAudioFile(e.target.files[0])}
+                          />
+                          <div className="flex space-x-2">
+                            <Button
+                              type="button"
+                              onClick={isRecording ? stopRecording : startRecording}
+                              variant={isRecording ? "destructive" : "outline"}
+                              className="flex items-center space-x-2"
+                            >
+                              <Mic className="w-4 h-4" />
+                              <span>
+                                {isRecording ? 'Stop Recording' : 'Record Audio'}
+                              </span>
+                            </Button>
+                            {audioFile && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  const url = URL.createObjectURL(audioFile);
+                                  const audio = new Audio(url);
+                                  audio.play();
+                                }}
+                              >
+                                <Play className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label>{t('narration.voice_to_text')}</Label>
+                        <div className="mt-2 space-y-2">
+                          <Button
+                            type="button"
+                            onClick={startVoiceRecognition}
+                            disabled={isRecording}
+                            variant="outline"
+                            className="w-full"
+                          >
+                            {isRecording ? t('narration.recording') : t('narration.start_recording')}
+                          </Button>
+                          <Textarea
+                            value={voiceText}
+                            onChange={(e) => setVoiceText(e.target.value)}
+                            placeholder={t('narration.type_narration')}
+                            rows={4}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-4">
+                      <Button onClick={handleSubmitNarration} disabled={!audioFile && !voiceText}>
+                        {t('narration.submit_narration')}
+                      </Button>
+                      <Button variant="outline" onClick={() => setSelectedStory(null)}>
+                        {t('stories.cancel')}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="narrations">
+            <motion.div 
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {narrations.map((narration, index) => {
+                const story = stories.find(s => s.id === narration.story_id);
+                
+                return (
+                  <motion.div
+                    key={narration.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -5 }}
+                  >
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="text-center">
+                          <Volume2 className="w-12 h-12 mx-auto text-blue-500 mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">{story?.title || 'Story'}</h3>
+                          <Badge 
+                            variant={
+                              narration.status === 'published' ? 'default' : 
+                              narration.status === 'pending' ? 'secondary' : 'outline'
+                            }
+                            className="mb-3"
+                          >
+                            {t(`status.${narration.status}`)}
+                          </Badge>
+                          <div className="flex justify-center space-x-2">
+                            <Button variant="outline" size="sm">{t('action.edit')}</Button>
+                            <Button variant="outline" size="sm">{t('action.delete')}</Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+// Continue with the rest...
