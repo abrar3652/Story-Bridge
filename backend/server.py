@@ -475,4 +475,548 @@ async def get_audio(audio_id: str):
     except Exception as e:
         raise HTTPException(status_code=404, detail="Audio not found")
 
-# Continue with remaining endpoints...
+# Audio file serving
+@api_router.get("/audio/{audio_id}")
+async def get_audio(audio_id: str):
+    try:
+        # Convert string ID back to ObjectId for GridFS
+        from bson import ObjectId
+        grid_out = await fs.open_download_stream(ObjectId(audio_id))
+        
+        audio_data = await grid_out.read()
+        
+        return Response(
+            content=audio_data,
+            media_type="audio/mpeg",
+            headers={"Content-Disposition": f"inline; filename=audio_{audio_id}.mp3"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Audio not found")
+
+# Narration routes
+@api_router.post("/narrations")
+async def create_narration(
+    story_id: str = Form(...),
+    text: Optional[str] = Form(None),
+    audio: Optional[UploadFile] = File(None),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in ["narrator", "admin"]:
+        raise HTTPException(status_code=403, detail="Only narrators can create narrations")
+    
+    # Check if story exists
+    story = await db.stories.find_one({"id": story_id})
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    narration_data = {
+        "story_id": story_id,
+        "narrator_id": current_user.id,
+        "text": text
+    }
+    
+    # Handle audio upload
+    if audio:
+        # Validate audio file
+        if not audio.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="File must be audio format")
+        
+        # Check file size (5MB limit)
+        content = await audio.read()
+        if len(content) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+        
+        # Upload to GridFS
+        audio_id = await fs.upload_from_stream(
+            f"narration_{uuid.uuid4()}.{audio.filename.split('.')[-1]}",
+            io.BytesIO(content),
+            metadata={"content_type": audio.content_type, "narrator_id": current_user.id}
+        )
+        narration_data["audio_id"] = str(audio_id)
+        
+        # Link audio to story
+        await db.stories.update_one(
+            {"id": story_id},
+            {"$set": {"audio_id": str(audio_id)}}
+        )
+    
+    narration_obj = Narration(**narration_data)
+    await db.narrations.insert_one(narration_obj.dict())
+    
+    return {"message": "Narration created successfully", "narration": narration_obj}
+
+@api_router.get("/narrations/narrator")
+async def get_narrator_narrations(current_user: User = Depends(get_current_user)):
+    if current_user.role not in ["narrator", "admin"]:
+        raise HTTPException(status_code=403, detail="Only narrators can access this")
+    
+    filter_dict = {"narrator_id": current_user.id} if current_user.role == "narrator" else {}
+    narrations = await db.narrations.find(filter_dict).to_list(100)
+    return [Narration(**narration) for narration in narrations]
+
+@api_router.put("/narrations/{narration_id}")
+async def update_narration(
+    narration_id: str, 
+    story_id: str = Form(...),
+    text: Optional[str] = Form(None),
+    audio: Optional[UploadFile] = File(None),
+    current_user: User = Depends(get_current_user)
+):
+    narration = await db.narrations.find_one({"id": narration_id})
+    if not narration:
+        raise HTTPException(status_code=404, detail="Narration not found")
+    
+    # Check permissions
+    if current_user.role != "admin" and narration["narrator_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Can only edit your own narrations")
+    
+    update_data = {"text": text, "updated_at": datetime.now(timezone.utc)}
+    
+    if audio:
+        # Handle new audio upload
+        if not audio.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="File must be audio format")
+        
+        content = await audio.read()
+        if len(content) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+        
+        # Delete old audio if exists
+        if narration.get("audio_id"):
+            try:
+                from bson import ObjectId
+                await fs.delete(ObjectId(narration["audio_id"]))
+            except:
+                pass
+        
+        # Upload new audio
+        audio_id = await fs.upload_from_stream(
+            f"narration_{uuid.uuid4()}.{audio.filename.split('.')[-1]}",
+            io.BytesIO(content),
+            metadata={"content_type": audio.content_type, "narrator_id": current_user.id}
+        )
+        update_data["audio_id"] = str(audio_id)
+    
+    await db.narrations.update_one({"id": narration_id}, {"$set": update_data})
+    
+    updated_narration = await db.narrations.find_one({"id": narration_id})
+    return Narration(**updated_narration)
+
+@api_router.delete("/narrations/{narration_id}")
+async def delete_narration(narration_id: str, current_user: User = Depends(get_current_user)):
+    narration = await db.narrations.find_one({"id": narration_id})
+    if not narration:
+        raise HTTPException(status_code=404, detail="Narration not found")
+    
+    # Check permissions
+    if current_user.role != "admin" and narration["narrator_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Can only delete your own narrations")
+    
+    # Delete audio file if exists
+    if narration.get("audio_id"):
+        try:
+            from bson import ObjectId
+            await fs.delete(ObjectId(narration["audio_id"]))
+        except:
+            pass
+    
+    await db.narrations.delete_one({"id": narration_id})
+    return {"message": "Narration deleted successfully"}
+
+@api_router.patch("/narrations/{narration_id}/status")
+async def update_narration_status(
+    narration_id: str, 
+    status: str, 
+    notes: Optional[str] = None, 
+    admin_user: User = Depends(get_admin_user)
+):
+    valid_statuses = ["draft", "pending", "published", "rejected"]
+    if status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Status must be one of: {valid_statuses}")
+    
+    update_data = {"status": status, "updated_at": datetime.now(timezone.utc)}
+    
+    result = await db.narrations.update_one({"id": narration_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Narration not found")
+    
+    # Create review record
+    review = ContentReview(
+        content_type="narration",
+        content_id=narration_id,
+        reviewer_id=admin_user.id,
+        status="approved" if status == "published" else "rejected",
+        notes=notes
+    )
+    await db.content_reviews.insert_one(review.dict())
+    
+    return {"message": f"Narration status updated to {status}"}
+
+# Progress and Badge routes
+@api_router.post("/progress")
+async def sync_progress(progress: Progress, current_user: User = Depends(get_current_user)):
+    progress_dict = progress.dict()
+    progress_dict["user_id"] = current_user.id
+    progress_dict["updated_at"] = datetime.now(timezone.utc)
+    
+    # Upsert progress
+    await db.progress.update_one(
+        {"user_id": current_user.id, "story_id": progress.story_id},
+        {"$set": progress_dict},
+        upsert=True
+    )
+    
+    # Check for badge eligibility
+    await check_badge_eligibility(current_user.id, progress)
+    
+    return {"message": "Progress synced successfully"}
+
+@api_router.get("/progress/user")
+async def get_user_progress(current_user: User = Depends(get_current_user)):
+    progress_list = await db.progress.find({"user_id": current_user.id}).to_list(100)
+    return [Progress(**progress) for progress in progress_list]
+
+async def check_badge_eligibility(user_id: str, progress: Progress):
+    """Check and award badges based on progress"""
+    # Get existing badges
+    existing_badges = await db.badges.find({"user_id": user_id}).to_list(100)
+    badge_types = [badge["badge_type"] for badge in existing_badges]
+    
+    # Story Starter: Complete 1 story
+    if "story_starter" not in badge_types and progress.completed:
+        badge = Badge(
+            user_id=user_id,
+            badge_type="story_starter",
+            metadata={"story_id": progress.story_id}
+        )
+        await db.badges.insert_one(badge.dict())
+    
+    # Word Wizard: Learn 10 vocabulary words
+    total_vocab = await db.progress.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$unwind": "$vocabulary_learned"},
+        {"$match": {"vocabulary_learned.learned": True}},
+        {"$count": "total"}
+    ]).to_list(1)
+    
+    if "word_wizard" not in badge_types and total_vocab and total_vocab[0]["total"] >= 10:
+        badge = Badge(
+            user_id=user_id,
+            badge_type="word_wizard",
+            metadata={"vocab_count": total_vocab[0]["total"]}
+        )
+        await db.badges.insert_one(badge.dict())
+    
+    # Quiz Master: Pass 5 quizzes
+    total_quizzes = await db.progress.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$unwind": "$quiz_results"},
+        {"$match": {"quiz_results.correct": True}},
+        {"$count": "total"}
+    ]).to_list(1)
+    
+    if "quiz_master" not in badge_types and total_quizzes and total_quizzes[0]["total"] >= 5:
+        badge = Badge(
+            user_id=user_id,
+            badge_type="quiz_master",
+            metadata={"quiz_count": total_quizzes[0]["total"]}
+        )
+        await db.badges.insert_one(badge.dict())
+
+@api_router.get("/badges/user")
+async def get_user_badges(current_user: User = Depends(get_current_user)):
+    badges = await db.badges.find({"user_id": current_user.id}).to_list(100)
+    return [Badge(**badge) for badge in badges]
+
+# Analytics routes
+@api_router.get("/analytics/ngo")
+async def get_ngo_analytics(current_user: User = Depends(get_current_user)):
+    if current_user.role not in ["end_user", "admin"]:  # Teachers (end_user) and admins can access
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Calculate metrics
+    now = datetime.now(timezone.utc)
+    week_ago = now - timedelta(days=7)
+    
+    # Active users (unique users with progress in last week)
+    active_users_pipeline = [
+        {"$match": {"updated_at": {"$gte": week_ago}}},
+        {"$group": {"_id": "$user_id"}},
+        {"$count": "active_users"}
+    ]
+    active_users_result = await db.progress.aggregate(active_users_pipeline).to_list(1)
+    active_users = active_users_result[0]["active_users"] if active_users_result else 0
+    
+    # Stories completed
+    completed_stories_pipeline = [
+        {"$match": {"completed": True, "updated_at": {"$gte": week_ago}}},
+        {"$count": "completed_stories"}
+    ]
+    completed_result = await db.progress.aggregate(completed_stories_pipeline).to_list(1)
+    stories_completed = completed_result[0]["completed_stories"] if completed_result else 0
+    
+    # Average session time
+    avg_time_pipeline = [
+        {"$match": {"updated_at": {"$gte": week_ago}, "time_spent": {"$gt": 0}}},
+        {"$group": {"_id": None, "avg_time": {"$avg": "$time_spent"}}}
+    ]
+    avg_time_result = await db.progress.aggregate(avg_time_pipeline).to_list(1)
+    avg_session_time = avg_time_result[0]["avg_time"] if avg_time_result else 0
+    
+    # Vocabulary retention rate
+    vocab_pipeline = [
+        {"$match": {"updated_at": {"$gte": week_ago}}},
+        {"$unwind": "$vocabulary_learned"},
+        {"$group": {
+            "_id": None,
+            "total": {"$sum": 1},
+            "learned": {"$sum": {"$cond": [{"$eq": ["$vocabulary_learned.learned", True]}, 1, 0]}}
+        }}
+    ]
+    vocab_result = await db.progress.aggregate(vocab_pipeline).to_list(1)
+    vocab_retention = 0
+    if vocab_result and vocab_result[0]["total"] > 0:
+        vocab_retention = (vocab_result[0]["learned"] / vocab_result[0]["total"]) * 100
+    
+    # Quiz success rate  
+    quiz_pipeline = [
+        {"$match": {"updated_at": {"$gte": week_ago}}},
+        {"$unwind": "$quiz_results"},
+        {"$group": {
+            "_id": None,
+            "total": {"$sum": 1},
+            "correct": {"$sum": {"$cond": [{"$eq": ["$quiz_results.correct", True]}, 1, 0]}}
+        }}
+    ]
+    quiz_result = await db.progress.aggregate(quiz_pipeline).to_list(1)
+    quiz_success_rate = 0
+    total_quiz_attempts = 0
+    if quiz_result:
+        total_quiz_attempts = quiz_result[0]["total"]
+        if total_quiz_attempts > 0:
+            quiz_success_rate = (quiz_result[0]["correct"] / total_quiz_attempts) * 100
+    
+    analytics = Analytics(
+        period="weekly",
+        active_users=active_users,
+        stories_completed=stories_completed,
+        avg_session_time=round(avg_session_time / 60, 2),  # Convert to minutes
+        vocabulary_retention_rate=round(vocab_retention, 2),
+        total_quiz_attempts=total_quiz_attempts,
+        quiz_success_rate=round(quiz_success_rate, 2)
+    )
+    
+    # Save analytics record
+    await db.analytics.insert_one(analytics.dict())
+    
+    return analytics
+
+@api_router.get("/analytics/export")
+async def export_analytics_csv(current_user: User = Depends(get_current_user)):
+    if current_user.role not in ["end_user", "admin"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get recent analytics records
+    analytics_records = await db.analytics.find().sort("generated_at", -1).limit(30).to_list(30)
+    
+    if not analytics_records:
+        raise HTTPException(status_code=404, detail="No analytics data available")
+    
+    # Convert to CSV format
+    import csv
+    import io
+    
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=[
+        'date', 'period', 'active_users', 'stories_completed', 
+        'avg_session_time_minutes', 'vocabulary_retention_rate', 
+        'total_quiz_attempts', 'quiz_success_rate'
+    ])
+    
+    writer.writeheader()
+    for record in analytics_records:
+        writer.writerow({
+            'date': record['generated_at'].strftime('%Y-%m-%d'),
+            'period': record['period'],
+            'active_users': record['active_users'],
+            'stories_completed': record['stories_completed'],
+            'avg_session_time_minutes': record['avg_session_time'],
+            'vocabulary_retention_rate': record['vocabulary_retention_rate'],
+            'total_quiz_attempts': record['total_quiz_attempts'],
+            'quiz_success_rate': record['quiz_success_rate']
+        })
+    
+    csv_content = output.getvalue()
+    output.close()
+    
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=storybridge_analytics.csv"}
+    )
+
+# Admin routes
+@api_router.get("/admin/pending")
+async def get_pending_content(admin_user: User = Depends(get_admin_user)):
+    pending_stories = await db.stories.find({"status": "pending"}).to_list(100)
+    pending_narrations = await db.narrations.find({"status": "pending"}).to_list(100)
+    
+    return {
+        "stories": [Story(**story) for story in pending_stories],
+        "narrations": [Narration(**narration) for narration in pending_narrations]
+    }
+
+@api_router.patch("/admin/content/{content_type}/{content_id}/approve")
+async def approve_content(
+    content_type: str, 
+    content_id: str, 
+    notes: Optional[str] = None,
+    admin_user: User = Depends(get_admin_user)
+):
+    if content_type not in ["story", "narration"]:
+        raise HTTPException(status_code=400, detail="Content type must be 'story' or 'narration'")
+    
+    collection = db.stories if content_type == "story" else db.narrations
+    
+    result = await collection.update_one(
+        {"id": content_id},
+        {"$set": {"status": "published", "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail=f"{content_type.title()} not found")
+    
+    # Create review record
+    review = ContentReview(
+        content_type=content_type,
+        content_id=content_id,
+        reviewer_id=admin_user.id,
+        status="approved",
+        notes=notes
+    )
+    await db.content_reviews.insert_one(review.dict())
+    
+    return {"message": f"{content_type.title()} approved successfully"}
+
+@api_router.patch("/admin/content/{content_type}/{content_id}/reject")
+async def reject_content(
+    content_type: str, 
+    content_id: str, 
+    notes: str,
+    admin_user: User = Depends(get_admin_user)
+):
+    if content_type not in ["story", "narration"]:
+        raise HTTPException(status_code=400, detail="Content type must be 'story' or 'narration'")
+    
+    collection = db.stories if content_type == "story" else db.narrations
+    
+    result = await collection.update_one(
+        {"id": content_id},
+        {"$set": {
+            "status": "rejected", 
+            "review_notes": notes,
+            "updated_at": datetime.now(timezone.utc)
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail=f"{content_type.title()} not found")
+    
+    # Create review record
+    review = ContentReview(
+        content_type=content_type,
+        content_id=content_id,
+        reviewer_id=admin_user.id,
+        status="rejected",
+        notes=notes
+    )
+    await db.content_reviews.insert_one(review.dict())
+    
+    return {"message": f"{content_type.title()} rejected"}
+
+@api_router.get("/admin/users")
+async def get_all_users(admin_user: User = Depends(get_admin_user)):
+    users = await db.users.find({}, {"password": 0, "mfa_secret": 0}).to_list(100)
+    return [User(**user) for user in users]
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(user_id: str, admin_user: User = Depends(get_admin_user)):
+    if user_id == admin_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Clean up user data
+    await db.progress.delete_many({"user_id": user_id})
+    await db.badges.delete_many({"user_id": user_id})
+    await db.stories.delete_many({"creator_id": user_id})
+    await db.narrations.delete_many({"narrator_id": user_id})
+    
+    return {"message": "User deleted successfully"}
+
+# Mock stories for development
+@api_router.post("/mock-stories")
+async def create_mock_stories():
+    mock_stories = [
+        {
+            "id": str(uuid.uuid4()),
+            "title": "The Brave Sparrow",
+            "text": "Once upon a time, in a beautiful garden, there lived a brave sparrow named Pip. Pip was brave, very brave indeed. Every morning, the brave sparrow would fly high in the sky. The sparrow loved to fly, fly, fly above the trees. One day, Pip saw a little cat stuck in a tree. The brave sparrow decided to help. Pip flew down to help the cat. The sparrow was so brave! With courage, the brave sparrow guided the cat to safety. From that day, everyone knew Pip was the bravest sparrow in the garden.",
+            "language": "en",
+            "age_group": "4-6",
+            "vocabulary": ["brave", "sparrow", "fly", "courage", "garden"],
+            "quizzes": [
+                {"type": "true_false", "question": "Pip was a brave sparrow?", "answer": True},
+                {"type": "multiple_choice", "question": "What did Pip love to do?", "options": ["swim", "fly", "run"], "answer": "fly"},
+                {"type": "fill_blank", "question": "Pip was a very _____ sparrow.", "answer": "brave"}
+            ],
+            "creator_id": "system",
+            "status": "published",
+            "created_at": datetime.now(timezone.utc)
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "title": "The Magic Tree",
+            "text": "In an enchanted forest, there grew a magic tree. The tree was magic, truly magic! This magic tree could grant wishes. Every child in the village knew about the magic tree. One day, a kind girl named Luna visited the magic tree. She wished for happiness for everyone. The magic tree glowed with golden light. The tree granted her wish! From that day, the magic tree brought joy to all who visited. The magic tree was loved by everyone in the enchanted forest.",
+            "language": "en", 
+            "age_group": "7-10",
+            "vocabulary": ["magic", "enchanted", "wishes", "granted", "golden"],
+            "quizzes": [
+                {"type": "true_false", "question": "The tree could grant wishes?", "answer": True},
+                {"type": "multiple_choice", "question": "What did Luna wish for?", "options": ["money", "happiness", "toys"], "answer": "happiness"},
+                {"type": "fill_blank", "question": "The tree was _____ and could grant wishes.", "answer": "magic"}
+            ],
+            "creator_id": "system",
+            "status": "published",
+            "created_at": datetime.now(timezone.utc)
+        }
+    ]
+    
+    for story in mock_stories:
+        await db.stories.insert_one(story)
+    
+    return {"message": f"Created {len(mock_stories)} mock stories"}
+
+# Include router and middleware
+app.include_router(api_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    client.close()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)
