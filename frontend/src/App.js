@@ -1931,3 +1931,1029 @@ const NarratorDashboard = () => {
 };
 
 // Continue with the rest...
+// Admin Dashboard Component
+const AdminDashboard = () => {
+  const [pendingContent, setPendingContent] = useState({ stories: [], narrations: [] });
+  const [users, setUsers] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(false);
+  
+  const { toast } = useToast();
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    fetchPendingContent();
+    fetchUsers();
+    fetchAnalytics();
+  }, []);
+
+  const fetchPendingContent = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/pending`);
+      setPendingContent(response.data);
+    } catch (error) {
+      console.error('Error fetching pending content:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/users`);
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const response = await axios.get(`${API}/analytics/ngo`);
+      setAnalytics(response.data);
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    }
+  };
+
+  const handleApprove = async (contentType, contentId, notes = '') => {
+    try {
+      await axios.patch(`${API}/admin/content/${contentType}/${contentId}/approve`, null, {
+        params: { notes }
+      });
+      
+      toast({
+        title: "Content approved",
+        description: `${contentType} has been published successfully.`,
+      });
+      
+      fetchPendingContent();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async (contentType, contentId, notes) => {
+    if (!notes) {
+      toast({
+        title: "Review notes required",
+        description: "Please provide feedback for rejection.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await axios.patch(`${API}/admin/content/${contentType}/${contentId}/reject`, null, {
+        params: { notes }
+      });
+      
+      toast({
+        title: "Content rejected",
+        description: `${contentType} has been rejected with feedback.`,
+      });
+      
+      fetchPendingContent();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Are you sure you want to delete user ${userName}?`)) return;
+
+    try {
+      await axios.delete(`${API}/admin/users/${userId}`);
+      toast({
+        title: "User deleted",
+        description: "User account has been removed successfully.",
+      });
+      fetchUsers();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportAnalytics = async () => {
+    try {
+      const response = await axios.get(`${API}/analytics/export`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'storybridge_analytics.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast({
+        title: "Export successful",
+        description: "Analytics data has been downloaded.",
+      });
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: "Failed to export analytics data.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100 p-4">
+      <div className="max-w-7xl mx-auto">
+        <motion.div 
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl font-bold text-gray-800">{t('dashboard.admin_dashboard')}</h1>
+          <p className="text-gray-600">{t('dashboard.manage_content')}</p>
+        </motion.div>
+
+        <Tabs defaultValue="pending" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="pending">Pending Content</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+          
+          {/* Pending Content Tab */}
+          <TabsContent value="pending">
+            <div className="space-y-8">
+              {/* Pending Stories */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Pending Stories</h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pendingContent.stories.map((story) => (
+                    <motion.div
+                      key={story.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -5 }}
+                    >
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="font-semibold">{story.title}</h4>
+                              <Badge variant="secondary">{story.age_group} years</Badge>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              {story.text.substring(0, 150)}...
+                            </p>
+                            <div>
+                              <p className="text-xs text-gray-500">Vocabulary:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {story.vocabulary.map((word, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {word}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleApprove('story', story.id)}
+                                className="flex items-center space-x-1"
+                              >
+                                <Check className="w-4 h-4" />
+                                <span>Approve</span>
+                              </Button>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button size="sm" variant="destructive">
+                                    <X className="w-4 h-4 mr-1" />
+                                    Reject
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Reject Story: {story.title}</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <Textarea 
+                                      placeholder="Provide feedback for rejection..."
+                                      id={`reject-notes-${story.id}`}
+                                    />
+                                    <Button 
+                                      onClick={() => {
+                                        const notes = document.getElementById(`reject-notes-${story.id}`).value;
+                                        handleReject('story', story.id, notes);
+                                      }}
+                                      variant="destructive"
+                                    >
+                                      Reject Story
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pending Narrations */}
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Pending Narrations</h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pendingContent.narrations.map((narration) => (
+                    <motion.div
+                      key={narration.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -5 }}
+                    >
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Volume2 className="w-8 h-8 text-blue-500" />
+                              <Badge variant="secondary">Narration</Badge>
+                            </div>
+                            {narration.audio_id && (
+                              <div>
+                                <audio controls className="w-full">
+                                  <source src={`${API}/audio/${narration.audio_id}`} type="audio/mpeg" />
+                                  Your browser does not support the audio element.
+                                </audio>
+                              </div>
+                            )}
+                            {narration.text && (
+                              <div>
+                                <p className="text-xs text-gray-500">Text:</p>
+                                <p className="text-sm">{narration.text}</p>
+                              </div>
+                            )}
+                            <div className="flex space-x-2">
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleApprove('narration', narration.id)}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button size="sm" variant="destructive">
+                                    <X className="w-4 h-4 mr-1" />
+                                    Reject
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Reject Narration</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <Textarea 
+                                      placeholder="Provide feedback for rejection..."
+                                      id={`reject-narration-${narration.id}`}
+                                    />
+                                    <Button 
+                                      onClick={() => {
+                                        const notes = document.getElementById(`reject-narration-${narration.id}`).value;
+                                        handleReject('narration', narration.id, notes);
+                                      }}
+                                      variant="destructive"
+                                    >
+                                      Reject Narration
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle>Platform Users</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {users.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{user.email}</p>
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <Badge variant="outline">{user.role}</Badge>
+                          <span>•</span>
+                          <span>{new Date(user.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => handleDeleteUser(user.id, user.email)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            {analytics && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold">Platform Analytics</h3>
+                  <Button onClick={exportAnalytics} variant="outline">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export CSV
+                  </Button>
+                </div>
+                
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <Users className="w-8 h-8 mx-auto text-blue-500 mb-2" />
+                        <h4 className="text-2xl font-bold">{analytics.active_users}</h4>
+                        <p className="text-sm text-gray-600">Active Users</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <Book className="w-8 h-8 mx-auto text-green-500 mb-2" />
+                        <h4 className="text-2xl font-bold">{analytics.stories_completed}</h4>
+                        <p className="text-sm text-gray-600">Stories Completed</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <BarChart3 className="w-8 h-8 mx-auto text-purple-500 mb-2" />
+                        <h4 className="text-2xl font-bold">{analytics.avg_session_time}min</h4>
+                        <p className="text-sm text-gray-600">Avg Session Time</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <Trophy className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
+                        <h4 className="text-2xl font-bold">{analytics.vocabulary_retention_rate}%</h4>
+                        <p className="text-sm text-gray-600">Vocabulary Retention</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <Card>
+                  <CardContent className="p-6">
+                    <h4 className="text-lg font-semibold mb-4">Quiz Performance</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Quiz Attempts</p>
+                        <p className="text-2xl font-bold">{analytics.total_quiz_attempts}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Success Rate</p>
+                        <p className="text-2xl font-bold">{analytics.quiz_success_rate}%</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};
+
+// Profile Management Component
+const ProfilePage = () => {
+  const [profileData, setProfileData] = useState({
+    email: '',
+    language: 'en',
+    avatar_url: ''
+  });
+  const [loading, setLoading] = useState(false);
+  
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        email: user.email || '',
+        language: user.language || 'en',
+        avatar_url: user.avatar_url || ''
+      });
+    }
+  }, [user]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await axios.put(`${API}/auth/profile`, profileData);
+      
+      // Update language if changed
+      if (profileData.language !== i18n.language) {
+        i18n.changeLanguage(profileData.language);
+        document.dir = getDirection(profileData.language);
+      }
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API}/auth/me`);
+      toast({
+        title: "Account deleted",
+        description: "Your account has been deleted successfully.",
+      });
+      logout();
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-2xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <User className="w-6 h-6" />
+                <span>Profile Settings</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profileData.email}
+                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="language">Language</Label>
+                  <Select 
+                    value={profileData.language} 
+                    onValueChange={(value) => setProfileData({...profileData, language: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="ar">العربية</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="avatar">Avatar URL (optional)</Label>
+                  <Input
+                    id="avatar"
+                    type="url"
+                    value={profileData.avatar_url}
+                    onChange={(e) => setProfileData({...profileData, avatar_url: e.target.value})}
+                    placeholder="https://example.com/avatar.jpg"
+                  />
+                </div>
+                
+                <div className="flex space-x-4">
+                  <Button type="submit" disabled={loading}>
+                    {loading ? t('action.loading') : t('action.save')}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => navigate('/dashboard')}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+              
+              <div className="mt-8 pt-6 border-t">
+                <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
+                <Button 
+                  onClick={handleDeleteAccount}
+                  variant="destructive"
+                  className="w-full"
+                >
+                  Delete Account
+                </Button>
+                <p className="text-sm text-gray-500 mt-2">
+                  This action is permanent and cannot be undone.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// Settings Component
+const SettingsPage = () => {
+  const [storageInfo, setStorageInfo] = useState({ itemCount: 0, totalSizeMB: '0.00' });
+  const [syncStatus, setSyncStatus] = useState('idle');
+  
+  const { storage, isOnline, user } = useAuth();
+  const { toast } = useToast();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    loadStorageInfo();
+  }, []);
+
+  const loadStorageInfo = async () => {
+    try {
+      const info = await storage.getStorageUsage();
+      setStorageInfo(info);
+    } catch (error) {
+      console.error('Error loading storage info:', error);
+    }
+  };
+
+  const handleClearExpiredData = async () => {
+    if (!window.confirm('Clear data older than 30 days?')) return;
+
+    try {
+      await storage.clearExpired(30);
+      await loadStorageInfo();
+      toast({
+        title: "Data cleared",
+        description: "Expired offline data has been removed.",
+      });
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: "Failed to clear expired data.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleForceSync = async () => {
+    if (!isOnline) {
+      toast({
+        title: "Offline",
+        description: "Cannot sync while offline.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSyncStatus('syncing');
+    try {
+      const success = await storage.syncWithServer(axios, localStorage.getItem('token'));
+      
+      setSyncStatus(success ? 'success' : 'error');
+      toast({
+        title: success ? "Sync completed" : "Sync failed",
+        description: success ? t('message.sync_complete') : "Some items could not be synced.",
+        variant: success ? "default" : "destructive",
+      });
+    } catch (error) {
+      setSyncStatus('error');
+      toast({
+        title: "Sync failed",
+        description: t('error.network'),
+        variant: "destructive",
+      });
+    } finally {
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
+
+  const handleResetAllData = async () => {
+    if (!window.confirm('This will delete ALL offline data. Are you sure?')) return;
+
+    try {
+      await storage.clearAllData();
+      await loadStorageInfo();
+      toast({
+        title: "Data reset",
+        description: "All offline data has been cleared.",
+      });
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: "Failed to reset data.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Settings className="w-6 h-6" />
+                <span>Settings</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {/* Language Settings */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Language & Localization</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Current Language</Label>
+                    <Select value={i18n.language} onValueChange={(lang) => {
+                      i18n.changeLanguage(lang);
+                      document.dir = getDirection(lang);
+                    }}>
+                      <SelectTrigger className="w-48">
+                        <Globe className="w-4 h-4 mr-2" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English (LTR)</SelectItem>
+                        <SelectItem value="ar">العربية (RTL)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Storage Management */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Offline Storage</h3>
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span>Storage Used</span>
+                      <span className="font-semibold">{storageInfo.totalSizeMB} MB</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-4">
+                      <span>Items Stored</span>
+                      <span className="font-semibold">{storageInfo.itemCount}</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button onClick={loadStorageInfo} variant="outline" size="sm">
+                        <RefreshCw className="w-4 h-4 mr-1" />
+                        Refresh
+                      </Button>
+                      <Button onClick={handleClearExpiredData} variant="outline" size="sm">
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Clear Old Data
+                      </Button>
+                      <Button onClick={handleResetAllData} variant="destructive" size="sm">
+                        Reset All Data
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sync Settings */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Data Synchronization</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">Connection Status</p>
+                      <p className="text-sm text-gray-600">
+                        {isOnline ? (
+                          <span className="flex items-center text-green-600">
+                            <Wifi className="w-4 h-4 mr-1" />
+                            Online
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-orange-600">
+                            <WifiOff className="w-4 h-4 mr-1" />
+                            Offline
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={handleForceSync}
+                      disabled={!isOnline || syncStatus === 'syncing'}
+                      variant="outline"
+                    >
+                      {syncStatus === 'syncing' ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                          Syncing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-1" />
+                          Force Sync
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* App Information */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">About StoryBridge</h3>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p>Version: 1.0.0</p>
+                  <p>Offline Support: Enabled</p>
+                  <p>PWA Compatible: Yes</p>
+                  {user && <p>User Role: {user.role}</p>}
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex space-x-4 pt-4 border-t">
+                <Button onClick={() => navigate('/dashboard')}>
+                  <Home className="w-4 h-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+                <Button onClick={() => navigate('/profile')} variant="outline">
+                  <User className="w-4 h-4 mr-2" />
+                  Profile Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// Main Dashboard Router with Admin support
+const Dashboard = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const getDashboardComponent = () => {
+    switch (user?.role) {
+      case 'end_user':
+        return <EndUserDashboard />;
+      case 'creator':
+        return <CreatorDashboard />;
+      case 'narrator':
+        return <NarratorDashboard />;
+      case 'admin':
+        return <AdminDashboard />;
+      default:
+        return <EndUserDashboard />;
+    }
+  };
+
+  return (
+    <div className="relative">
+      {/* Enhanced Navigation */}
+      <div className="fixed top-4 right-4 z-50 flex items-center space-x-2">
+        <Button
+          onClick={() => navigate('/settings')}
+          variant="outline"
+          size="sm"
+        >
+          <Settings className="w-4 h-4" />
+        </Button>
+        <Button
+          onClick={() => navigate('/profile')}
+          variant="outline"
+          size="sm"
+        >
+          <User className="w-4 h-4" />
+        </Button>
+        <Button
+          onClick={handleLogout}
+          variant="outline"
+          size="sm"
+        >
+          <LogOut className="w-4 h-4" />
+        </Button>
+      </div>
+      
+      {getDashboardComponent()}
+    </div>
+  );
+};
+
+// Protected Route Component with offline support
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Book className="w-16 h-16 mx-auto text-orange-500 mb-4 animate-spin" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return user ? children : <Navigate to="/auth" replace />;
+};
+
+// PWA Install Prompt Component
+const PWAInstallPrompt = () => {
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('SW registered: ', registration);
+        })
+        .catch((registrationError) => {
+          console.log('SW registration failed: ', registrationError);
+        });
+    }
+
+    // Handle PWA install prompt
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setShowInstallPrompt(false);
+    }
+    
+    setDeferredPrompt(null);
+  };
+
+  if (!showInstallPrompt) return null;
+
+  return (
+    <motion.div 
+      className="fixed bottom-4 left-4 right-4 bg-white rounded-lg shadow-lg p-4 z-50 border"
+      initial={{ opacity: 0, y: 100 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <Book className="w-8 h-8 text-orange-500" />
+          <div>
+            <p className="font-semibold">Install StoryBridge</p>
+            <p className="text-sm text-gray-600">Get the full offline experience</p>
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={() => setShowInstallPrompt(false)}
+            variant="outline"
+            size="sm"
+          >
+            Later
+          </Button>
+          <Button 
+            onClick={handleInstallClick}
+            size="sm"
+          >
+            Install
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Main App Component with PWA and i18n support
+function App() {
+  const { t } = useTranslation();
+
+  // Add language direction to document
+  useEffect(() => {
+    document.dir = getDirection(i18n.language);
+  }, []);
+
+  return (
+    <div className="App">
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <SettingsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          <PWAInstallPrompt />
+        </BrowserRouter>
+        <Toaster />
+      </AuthProvider>
+    </div>
+  );
+}
+
+export default App;
