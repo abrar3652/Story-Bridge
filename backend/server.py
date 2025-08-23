@@ -148,6 +148,19 @@ class ContentReview(BaseModel):
     notes: Optional[str] = None
     reviewed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# Google OAuth Models
+class GoogleOAuthRequest(BaseModel):
+    code: str
+    redirect_uri: str
+
+class MFASetupRequest(BaseModel):
+    password: str
+
+class MFAToggleRequest(BaseModel):
+    enabled: bool
+    password: str
+    totp_code: Optional[str] = None
+
 # Authentication helpers
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
