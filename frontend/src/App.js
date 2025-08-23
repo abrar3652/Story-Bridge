@@ -163,17 +163,129 @@ const AuthProvider = ({ children }) => {
   );
 };
 
-// Enhanced Landing Page with RTL support
+// Enhanced Landing Page with comprehensive guides and RTL support
 const LandingPage = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   const direction = getDirection(currentLang);
+  const [expandedFAQ, setExpandedFAQ] = useState(null);
+  const [expandedGuide, setExpandedGuide] = useState(null);
   
   const changeLanguage = (lang) => {
     i18n.changeLanguage(lang);
     document.dir = getDirection(lang);
   };
+
+  // How to Use data for different roles
+  const howToUseGuides = {
+    end_user: {
+      title: "For Students, Parents & Teachers",
+      icon: <User className="w-6 h-6" />,
+      steps: [
+        { icon: <Book className="w-5 h-5" />, text: "Browse story library and choose age-appropriate stories" },
+        { icon: <Play className="w-5 h-5" />, text: "Listen to interactive audio stories with voice narration" },
+        { icon: <Trophy className="w-5 h-5" />, text: "Complete quizzes and learn new vocabulary words" },
+        { icon: <Coins className="w-5 h-5" />, text: "Earn coins and badges for story completion" },
+        { icon: <Download className="w-5 h-5" />, text: "Download stories for offline learning anywhere" }
+      ]
+    },
+    creator: {
+      title: "For Story Creators",
+      icon: <Book className="w-6 h-6" />,
+      steps: [
+        { icon: <User className="w-5 h-5" />, text: "Sign up as a Story Creator and verify your account" },
+        { icon: <Book className="w-5 h-5" />, text: "Write engaging stories following TPRS methodology" },
+        { icon: <Globe className="w-5 h-5" />, text: "Add 3-5 vocabulary words repeated 3+ times in your story" },
+        { icon: <Check className="w-5 h-5" />, text: "Create interactive quizzes (true/false, multiple choice)" },
+        { icon: <Shield className="w-5 h-5" />, text: "Submit for admin review and await publication" }
+      ]
+    },
+    narrator: {
+      title: "For Voice Narrators",
+      icon: <Mic className="w-6 h-6" />,
+      steps: [
+        { icon: <User className="w-5 h-5" />, text: "Register as a Voice Narrator with audio experience" },
+        { icon: <Book className="w-5 h-5" />, text: "Browse published stories that need narration" },
+        { icon: <Mic className="w-5 h-5" />, text: "Record high-quality audio or upload audio files" },
+        { icon: <Volume2 className="w-5 h-5" />, text: "Use voice-to-text features for script creation" },
+        { icon: <Shield className="w-5 h-5" />, text: "Submit narrations for admin approval" }
+      ]
+    },
+    admin: {
+      title: "For Administrators",
+      icon: <Shield className="w-6 h-6" />,
+      steps: [
+        { icon: <Users className="w-5 h-5" />, text: "Manage user accounts and system permissions" },
+        { icon: <Check className="w-5 h-5" />, text: "Review and approve story content and narrations" },
+        { icon: <BarChart3 className="w-5 h-5" />, text: "Monitor analytics and generate NGO reports" },
+        { icon: <Shield className="w-5 h-5" />, text: "Ensure content quality and TPRS compliance" },
+        { icon: <Settings className="w-5 h-5" />, text: "Configure platform settings and partnerships" }
+      ]
+    }
+  };
+
+  // PWA Installation Guide
+  const pwaGuide = {
+    title: "Install StoryBridge App",
+    subtitle: "Get the full app experience on your device",
+    steps: [
+      { 
+        platform: "Android (Chrome)",
+        icon: <Download className="w-5 h-5" />,
+        steps: [
+          "Open StoryBridge in Chrome browser",
+          "Tap the menu (⋮) in top right corner", 
+          "Select 'Add to Home screen'",
+          "Tap 'Install' when prompted",
+          "Find StoryBridge icon on your home screen"
+        ]
+      },
+      {
+        platform: "iOS (Safari)", 
+        icon: <Download className="w-5 h-5" />,
+        steps: [
+          "Open StoryBridge in Safari browser",
+          "Tap the share button (□↑) at the bottom",
+          "Scroll down and tap 'Add to Home Screen'",
+          "Tap 'Add' to confirm installation", 
+          "Launch from your home screen icon"
+        ]
+      }
+    ]
+  };
+
+  // FAQ data
+  const faqs = [
+    {
+      question: "How does StoryBridge work offline?",
+      answer: "Once you download stories to your device, you can access them completely offline. Your progress, coins, and badges are saved locally and sync when you reconnect to the internet."
+    },
+    {
+      question: "What is TPRS methodology?",
+      answer: "Teaching Proficiency through Reading and Storytelling (TPRS) uses compelling stories with repetitive vocabulary to help children naturally acquire language skills through context and engagement."
+    },
+    {
+      question: "How do I earn coins and badges?",
+      answer: "You earn 10 coins for each completed story and 5 coins for each correct quiz answer. Badges are awarded for milestones like completing your first story (Story Starter) or learning 10 words (Word Wizard)."
+    },
+    {
+      question: "Can I use StoryBridge in different languages?",
+      answer: "Yes! StoryBridge supports English and Arabic with full RTL (right-to-left) layout support. Stories are available in both languages for multilingual learning."
+    },
+    {
+      question: "How do I become a Story Creator or Narrator?",
+      answer: "Simply sign up with the Creator or Narrator role. Creators can write and submit stories, while Narrators add voice recordings to bring stories to life. All content goes through admin review."
+    },
+    {
+      question: "Is StoryBridge suitable for children with learning disabilities?",
+      answer: "Yes! StoryBridge follows WCAG 2.1 accessibility guidelines with screen reader support, audio cues, large touch targets, and simple navigation designed for children with diverse needs."
+    },
+    {
+      question: "How can NGOs partner with StoryBridge?", 
+      answer: "NGOs can access free platform usage, co-branded materials, priority support, and detailed analytics reports. Contact us through the partnership section in Settings for more information."
+    }
+  ];
   
   return (
     <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${direction === 'rtl' ? 'rtl' : ''}`} dir={direction}>
@@ -192,6 +304,7 @@ const LandingPage = () => {
           </Select>
         </div>
 
+        {/* Hero Section */}
         <div className="text-center mb-16">
           <motion.div 
             className="mb-8"
@@ -233,8 +346,9 @@ const LandingPage = () => {
           </motion.div>
         </div>
         
+        {/* Features Grid */}
         <motion.div 
-          className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto"
+          className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.6 }}
@@ -262,6 +376,179 @@ const LandingPage = () => {
               <p className="text-gray-600">{t('feature.offline_learning.desc')}</p>
             </CardContent>
           </Card>
+        </motion.div>
+
+        {/* How to Use Section */}
+        <motion.div 
+          className="mb-16"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.6 }}
+        >
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">How to Use StoryBridge</h2>
+          <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+            StoryBridge is designed for different types of users. Choose your role below to see how to get started.
+          </p>
+          
+          <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            {Object.entries(howToUseGuides).map(([roleKey, guide]) => (
+              <motion.div key={roleKey} whileHover={{ y: -5 }}>
+                <Card className="h-full cursor-pointer" onClick={() => setExpandedGuide(expandedGuide === roleKey ? null : roleKey)}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center space-x-3 text-lg">
+                      {guide.icon}
+                      <span>{guide.title}</span>
+                      <motion.div 
+                        animate={{ rotate: expandedGuide === roleKey ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <SkipForward className="w-4 h-4 transform rotate-90" />
+                      </motion.div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <AnimatePresence>
+                      {expandedGuide === roleKey && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="space-y-3">
+                            {guide.steps.map((step, index) => (
+                              <motion.div 
+                                key={index}
+                                className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                              >
+                                <div className="text-orange-500 mt-0.5">{step.icon}</div>
+                                <span className="text-sm text-gray-700">{step.text}</span>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* PWA Installation Guide */}
+        <motion.div 
+          className="mb-16"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.1, duration: 0.6 }}
+        >
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">{pwaGuide.title}</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">{pwaGuide.subtitle}</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {pwaGuide.steps.map((platform, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-3">
+                    {platform.icon}
+                    <span>{platform.platform}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {platform.steps.map((step, stepIndex) => (
+                      <div key={stepIndex} className="flex items-start space-x-3">
+                        <div className="w-6 h-6 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center mt-0.5">
+                          {stepIndex + 1}
+                        </div>
+                        <span className="text-sm text-gray-700">{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* FAQ Section */}
+        <motion.div 
+          className="mb-16"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.3, duration: 0.6 }}
+        >
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Find answers to common questions about StoryBridge features and functionality.
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            {faqs.map((faq, index) => (
+              <motion.div key={index} className="mb-4" whileHover={{ scale: 1.01 }}>
+                <Card 
+                  className="cursor-pointer transition-all hover:shadow-md"
+                  onClick={() => setExpandedFAQ(expandedFAQ === index ? null : index)}
+                >
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex justify-between items-center text-lg">
+                      <span className="text-left">{faq.question}</span>
+                      <motion.div
+                        animate={{ rotate: expandedFAQ === index ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <SkipForward className="w-5 h-5 transform rotate-90 text-orange-500" />
+                      </motion.div>
+                    </CardTitle>
+                  </CardHeader>
+                  <AnimatePresence>
+                    {expandedFAQ === index && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <CardContent className="pt-0">
+                          <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                        </CardContent>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* NGO Partnership Info */}
+        <motion.div 
+          className="text-center bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.5, duration: 0.6 }}
+        >
+          <Users className="w-16 h-16 mx-auto text-blue-500 mb-4" />
+          <h3 className="text-2xl font-bold text-gray-800 mb-4">NGO Partnerships</h3>
+          <p className="text-gray-600 max-w-2xl mx-auto mb-6">
+            StoryBridge partners with NGOs worldwide to provide free educational content for underserved communities. 
+            Get co-branded materials, analytics, and priority support for your educational initiatives.
+          </p>
+          <Button 
+            variant="outline" 
+            className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
+            onClick={() => navigate('/auth')}
+          >
+            Learn About Partnerships
+          </Button>
         </motion.div>
       </div>
     </div>
