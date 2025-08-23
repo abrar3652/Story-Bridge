@@ -1969,6 +1969,46 @@ const CreatorDashboard = () => {
                     />
                   </div>
                   
+                  {/* SVG Image Upload Section */}
+                  <div>
+                    <Label htmlFor="images">Story Images (SVG, max 5 files, 500KB each)</Label>
+                    <div className="space-y-4">
+                      <Input
+                        id="images"
+                        type="file"
+                        multiple
+                        accept=".svg,image/svg+xml,image/*"
+                        onChange={handleImageUpload}
+                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                      />
+                      
+                      {/* Display uploaded images */}
+                      {uploadedImages.length > 0 && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {uploadedImages.map((img) => (
+                            <div key={img.id} className="relative group border border-gray-200 rounded-lg p-2">
+                              <img 
+                                src={img.preview} 
+                                alt={img.name}
+                                className="w-full h-24 object-cover rounded"
+                              />
+                              <p className="text-xs text-gray-500 mt-1 truncate">{img.name}</p>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                className="absolute top-1 right-1 w-6 h-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => removeImage(img.id)}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
                   <div>
                     <Label htmlFor="quizzes">{t('stories.quizzes')}</Label>
                     <Textarea
@@ -1980,11 +2020,48 @@ const CreatorDashboard = () => {
                     />
                   </div>
                   
-                  <div className="flex space-x-4">
-                    <Button type="submit">
-                      {editingStory ? 'Update Story' : t('stories.create_story')}
+                  {/* TPRS Validation Display */}
+                  {formData.text && formData.vocabulary && (
+                    <div className={`p-4 rounded-lg border-l-4 ${
+                      tprsValidation.valid 
+                        ? 'bg-green-50 border-green-400 text-green-700' 
+                        : 'bg-red-50 border-red-400 text-red-700'
+                    }`}>
+                      <div className="flex items-center space-x-2">
+                        {tprsValidation.valid ? (
+                          <Check className="w-5 h-5" />
+                        ) : (
+                          <AlertTriangle className="w-5 h-5" />
+                        )}
+                        <span className="font-medium">TPRS Validation</span>
+                      </div>
+                      <p className="text-sm mt-1">{tprsValidation.message}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-wrap gap-3">
+                    <Button type="button" variant="outline" onClick={() => setPreviewMode(true)}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview Story
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={(e) => handleSubmit(e, true)}
+                      disabled={!isOnline}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Save as Draft
+                    </Button>
+                    <Button 
+                      type="submit"
+                      disabled={!isOnline || !tprsValidation.valid}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {editingStory ? 'Update Story' : 'Submit for Review'}
                     </Button>
                     <Button type="button" variant="outline" onClick={resetForm}>
+                      <X className="w-4 h-4 mr-2" />
                       {t('stories.cancel')}
                     </Button>
                   </div>
