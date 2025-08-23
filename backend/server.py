@@ -352,6 +352,198 @@ async def verify_mfa(code: str, current_user: User = Depends(get_current_user)):
     else:
         raise HTTPException(status_code=400, detail="Invalid MFA code")
 
+# Google OAuth routes
+@api_router.post("/auth/google", response_model=Token)
+async def google_oauth_login(oauth_request: GoogleOAuthRequest):
+    """Handle Google OAuth login/signup"""
+    try:
+        # Exchange authorization code for access token
+        token_url = "https://oauth2.googleapis.com/token"
+        token_data = {
+            "client_id": os.environ.get("GOOGLE_CLIENT_ID"),
+            "client_secret": os.environ.get("GOOGLE_CLIENT_SECRET"),
+            "code": oauth_request.code,
+            "grant_type": "authorization_code",
+            "redirect_uri": oauth_request.redirect_uri,
+        }
+        
+        token_response = requests.post(token_url, data=token_data)
+        token_response.raise_for_status()
+        token_json = token_response.json()
+        
+        # Verify ID token
+        id_token_jwt = token_json.get("id_token")
+        if not id_token_jwt:
+            raise HTTPException(status_code=400, detail="No ID token received")
+            
+        # Verify the token
+        idinfo = id_token.verify_oauth2_token(
+            id_token_jwt, 
+            google_requests.Request(), 
+            os.environ.get("GOOGLE_CLIENT_ID")
+        )
+        
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise HTTPException(status_code=400, detail="Wrong issuer")
+            
+        email = idinfo.get('email')
+        name = idinfo.get('name', '')
+        picture = idinfo.get('picture', '')
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not provided by Google")
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({"email": email})
+        
+        if existing_user:
+            # Login existing user
+            user_obj = User(**existing_user)
+            
+            # Check MFA for admin users
+            if user_obj.role == "admin" and user_obj.mfa_enabled:
+                # For Google OAuth, we'll skip MFA for now but could implement it
+                # In production, you might want to require MFA setup after Google login
+                pass
+            
+            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"sub": user_obj.id}, expires_delta=access_token_expires
+            )
+            
+            # Update avatar if provided
+            if picture and not existing_user.get('avatar_url'):
+                await db.users.update_one(
+                    {"id": user_obj.id}, 
+                    {"$set": {"avatar_url": picture}}
+                )
+                user_obj.avatar_url = picture
+            
+            return {"access_token": access_token, "token_type": "bearer", "user": user_obj}
+            
+        else:
+            # Create new user (default to end_user role for Google OAuth)
+            user_id = str(uuid.uuid4())
+            user_data = {
+                "id": user_id,
+                "email": email,
+                "password": get_password_hash(str(uuid.uuid4())),  # Random password for OAuth users
+                "role": "end_user",  # Default role for Google signup
+                "language": "en",
+                "mfa_enabled": False,
+                "avatar_url": picture,
+                "created_at": datetime.now(timezone.utc)
+            }
+            
+            await db.users.insert_one(user_data)
+            
+            user_obj = User(**user_data)
+            
+            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"sub": user_obj.id}, expires_delta=access_token_expires
+            )
+            
+            return {"access_token": access_token, "token_type": "bearer", "user": user_obj}
+            
+    except requests.RequestException as e:
+        raise HTTPException(status_code=400, detail=f"Google OAuth error: {str(e)}")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid token: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OAuth error: {str(e)}")
+
+# Enhanced MFA routes for admin dashboard
+@api_router.post("/auth/mfa-toggle")
+async def toggle_mfa(mfa_request: MFAToggleRequest, current_user: User = Depends(get_current_user)):
+    """Toggle MFA for admin users"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="MFA is only available for admin users")
+    
+    # Verify current password
+    db_user = await db.users.find_one({"id": current_user.id})
+    if not verify_password(mfa_request.password, db_user["password"]):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+    
+    if mfa_request.enabled:
+        # Enable MFA
+        if not current_user.mfa_secret:
+            # Generate new secret if not exists
+            secret = generate_mfa_secret()
+            await db.users.update_one(
+                {"id": current_user.id}, 
+                {"$set": {"mfa_secret": secret}}
+            )
+            current_user.mfa_secret = secret
+            
+        # Verify TOTP code before enabling
+        if not mfa_request.totp_code or not verify_mfa_code(current_user.mfa_secret, mfa_request.totp_code):
+            raise HTTPException(status_code=400, detail="Invalid TOTP code")
+            
+        await db.users.update_one(
+            {"id": current_user.id},
+            {"$set": {"mfa_enabled": True}}
+        )
+        
+        return {"message": "MFA enabled successfully", "enabled": True}
+    else:
+        # Disable MFA
+        await db.users.update_one(
+            {"id": current_user.id},
+            {"$set": {"mfa_enabled": False}}
+        )
+        
+        return {"message": "MFA disabled successfully", "enabled": False}
+
+@api_router.get("/auth/mfa-qr")
+async def get_mfa_qr(current_user: User = Depends(get_current_user)):
+    """Get MFA QR code for setup"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="MFA is only available for admin users")
+    
+    # Generate secret if not exists
+    if not current_user.mfa_secret:
+        secret = generate_mfa_secret()
+        await db.users.update_one(
+            {"id": current_user.id}, 
+            {"$set": {"mfa_secret": secret}}
+        )
+    else:
+        secret = current_user.mfa_secret
+    
+    qr_code = generate_qr_code(current_user.email, secret)
+    
+    return {"qr_code": qr_code, "secret": secret, "enabled": current_user.mfa_enabled}
+
+# Admin login route (separate from regular login)
+@api_router.post("/auth/admin-login", response_model=Token)
+async def admin_login(user: UserLogin):
+    """Separate admin login endpoint with MFA support"""
+    db_user = await db.users.find_one({"email": user.email})
+    if not db_user or not verify_password(user.password, db_user["password"]):
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    
+    user_obj = User(**db_user)
+    
+    # Only allow admin users
+    if user_obj.role != "admin":
+        raise HTTPException(status_code=403, detail="Access denied - Admin only")
+    
+    # Check MFA if enabled
+    if user_obj.mfa_enabled:
+        if not user.mfa_code:
+            return {"access_token": "", "token_type": "bearer", "user": user_obj, "mfa_required": True}
+        
+        if not verify_mfa_code(user_obj.mfa_secret, user.mfa_code):
+            raise HTTPException(status_code=401, detail="Invalid MFA code")
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user_obj.id}, expires_delta=access_token_expires
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer", "user": user_obj}
+
 # Story routes
 @api_router.post("/stories", response_model=Story)
 async def create_story(story: StoryCreate, current_user: User = Depends(get_current_user)):
