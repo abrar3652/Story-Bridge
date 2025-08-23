@@ -2006,9 +2006,27 @@ const EndUserDashboard = () => {
                           ))}
                         </div>
                         
-                        <Button className="w-full">
-                          {isCompleted ? t('stories.play_again') : t('stories.start_story')}
-                        </Button>
+                        {/* FR-3: Enhanced Download Button with Pack Support */}
+                        <div className="space-y-2">
+                          <Button className="w-full">
+                            {isCompleted ? t('stories.play_again') : t('stories.start_story')}
+                          </Button>
+                          
+                          {!downloadedStories.has(story.id) && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="w-full"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadStoryForOffline(story);
+                              }}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Download for Offline
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
