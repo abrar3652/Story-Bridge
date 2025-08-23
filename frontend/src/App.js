@@ -2170,16 +2170,18 @@ const CreatorDashboard = () => {
   );
 };
 
-// Enhanced Narrator Dashboard
+// Enhanced Narrator Dashboard with editing functionality
 const NarratorDashboard = () => {
   const [stories, setStories] = useState([]);
   const [narrations, setNarrations] = useState([]);
   const [selectedStory, setSelectedStory] = useState(null);
+  const [editingNarration, setEditingNarration] = useState(null);
   const [audioFile, setAudioFile] = useState(null);
   const [voiceText, setVoiceText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [recordedBlobs, setRecordedBlobs] = useState([]);
+  const [activeTab, setActiveTab] = useState('available');
   
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -2192,10 +2194,19 @@ const NarratorDashboard = () => {
 
   const fetchStories = async () => {
     try {
-      const response = await axios.get(`${API}/stories?status=published`);
-      setStories(response.data);
+      const response = await axios.get(`${API}/stories`);
+      // Filter for stories that are published and either have no narration or need updating
+      const availableStories = response.data.filter(story => 
+        story.status === 'published' || story.status === 'pending'
+      );
+      setStories(availableStories);
     } catch (error) {
       console.error('Error fetching stories:', error);
+      toast({
+        title: t('error.general'),
+        description: t('error.network'),
+        variant: "destructive",
+      });
     }
   };
 
@@ -2206,6 +2217,38 @@ const NarratorDashboard = () => {
     } catch (error) {
       console.error('Error fetching narrations:', error);
     }
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['audio/mp3', 'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/webm'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload MP3, OGG, WAV, or WebM audio files",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Audio file must be smaller than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAudioFile(file);
+    toast({
+      title: "File uploaded",
+      description: `${file.name} ready for submission`,
+    });
   };
 
   const startRecording = async () => {
