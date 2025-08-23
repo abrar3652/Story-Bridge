@@ -1530,7 +1530,7 @@ const EndUserDashboard = () => {
   );
 };
 
-// Enhanced Creator Dashboard
+// Enhanced Creator Dashboard with SVG upload and draft submission
 const CreatorDashboard = () => {
   const [stories, setStories] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -1541,8 +1541,12 @@ const CreatorDashboard = () => {
     language: 'en',
     age_group: '4-6',
     vocabulary: '',
-    quizzes: ''
+    quizzes: '',
+    images: []
   });
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [tprsValidation, setTprsValidation] = useState({ valid: true, message: '' });
   
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -1551,6 +1555,91 @@ const CreatorDashboard = () => {
   useEffect(() => {
     fetchCreatorStories();
   }, []);
+
+  // Real-time TPRS validation
+  useEffect(() => {
+    validateTprs();
+  }, [formData.text, formData.vocabulary]);
+
+  const validateTprs = () => {
+    if (!formData.text || !formData.vocabulary) {
+      setTprsValidation({ valid: true, message: '' });
+      return;
+    }
+
+    const words = formData.text.toLowerCase().split(/\W+/).filter(w => w);
+    const vocabWords = formData.vocabulary.split(',').map(w => w.trim().toLowerCase()).filter(w => w);
+    
+    const repetitionCounts = {};
+    vocabWords.forEach(word => {
+      repetitionCounts[word] = words.filter(w => w === word).length;
+    });
+
+    const insufficientReps = Object.entries(repetitionCounts).filter(([word, count]) => count < 3);
+    
+    if (insufficientReps.length > 0) {
+      setTprsValidation({
+        valid: false,
+        message: `Vocabulary words need 3+ repetitions: ${insufficientReps.map(([word]) => word).join(', ')}`
+      });
+    } else {
+      setTprsValidation({ valid: true, message: 'TPRS validation passed!' });
+    }
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    // Validate SVG files
+    const validFiles = files.filter(file => {
+      if (!file.type.includes('svg') && !file.type.includes('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a valid image file`,
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      if (file.size > 500 * 1024) { // 500KB limit
+        toast({
+          title: "File too large",
+          description: `${file.name} exceeds 500KB limit`,
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      return true;
+    });
+
+    if (uploadedImages.length + validFiles.length > 5) {
+      toast({
+        title: "Too many images",
+        description: "Maximum 5 images allowed per story",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageData = {
+          id: Date.now() + Math.random(),
+          file: file,
+          preview: e.target.result,
+          name: file.name
+        };
+        setUploadedImages(prev => [...prev, imageData]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (imageId) => {
+    setUploadedImages(prev => prev.filter(img => img.id !== imageId));
+  };
 
   const fetchCreatorStories = async () => {
     try {
@@ -1566,7 +1655,7 @@ const CreatorDashboard = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, isDraft = false) => {
     e.preventDefault();
     
     if (!isOnline) {
@@ -1578,26 +1667,150 @@ const CreatorDashboard = () => {
       return;
     }
 
+    if (!isDraft && !tprsValidation.valid) {
+      toast({
+        title: "TPRS Validation Failed",
+        description: tprsValidation.message,
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      const storyData = {
-        ...formData,
-        vocabulary: formData.vocabulary.split(',').map(w => w.trim()).filter(w => w),
-        quizzes: formData.quizzes ? JSON.parse(formData.quizzes) : []
-      };
+      const formPayload = new FormData();
+      
+      // Basic story data
+      formPayload.append('title', formData.title);
+      formPayload.append('text', formData.text);
+      formPayload.append('language', formData.language);
+      formPayload.append('age_group', formData.age_group);
+      formPayload.append('vocabulary', JSON.stringify(formData.vocabulary.split(',').map(w => w.trim()).filter(w => w)));
+      formPayload.append('quizzes', formData.quizzes || '[]');
+      
+      // Upload images
+      uploadedImages.forEach((img, index) => {
+        formPayload.append(`image_${index}`, img.file);
+      });
+      
+      // Set status
+      const status = isDraft ? 'draft' : 'pending';
+      formPayload.append('status', status);
       
       if (editingStory) {
-        await axios.put(`${API}/stories/${editingStory.id}`, storyData);
+        const response = await fetch(`${API}/stories/${editingStory.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formPayload
+        });
+        
+        if (!response.ok) throw new Error('Failed to update story');
+        
         toast({
           title: "Story updated!",
           description: "Your story has been updated successfully.",
         });
       } else {
-        await axios.post(`${API}/stories`, storyData);
+        const response = await fetch(`${API}/stories`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formPayload
+        });
+        
+        if (!response.ok) throw new Error('Failed to create story');
+        
         toast({
-          title: t('message.story_created'),
-          description: t('message.story_submitted'),
+          title: isDraft ? "Draft saved!" : "Story submitted!",
+          description: isDraft ? "Your story has been saved as a draft." : "Your story has been submitted for review.",
         });
       }
+      
+      resetForm();
+      fetchCreatorStories();
+    } catch (error) {
+      console.error('Error submitting story:', error);
+      toast({
+        title: t('error.general'),
+        description: error.message || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmitToPending = async (storyId) => {
+    try {
+      await axios.patch(`${API}/stories/${storyId}/status`, null, {
+        params: { status: 'pending' }
+      });
+      
+      toast({
+        title: "Story submitted!",
+        description: "Your story has been submitted for admin review.",
+      });
+      
+      fetchCreatorStories();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEdit = (story) => {
+    setEditingStory(story);
+    setFormData({
+      title: story.title,
+      text: story.text,
+      language: story.language,
+      age_group: story.age_group,
+      vocabulary: story.vocabulary.join(', '),
+      quizzes: JSON.stringify(story.quizzes, null, 2),
+      images: story.images || []
+    });
+    setUploadedImages([]); // Reset uploaded images for editing
+    setShowForm(true);
+  };
+
+  const handleDelete = async (storyId) => {
+    if (!window.confirm('Are you sure you want to delete this story?')) return;
+    
+    try {
+      await axios.delete(`${API}/stories/${storyId}`);
+      toast({
+        title: "Story deleted",
+        description: "Story has been removed successfully.",
+      });
+      fetchCreatorStories();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingStory(null);
+    setPreviewMode(false);
+    setUploadedImages([]);
+    setFormData({
+      title: '',
+      text: '',
+      language: 'en',
+      age_group: '4-6',
+      vocabulary: '',
+      quizzes: '',
+      images: []
+    });
+    setTprsValidation({ valid: true, message: '' });
+  };
       
       resetForm();
       fetchCreatorStories();
