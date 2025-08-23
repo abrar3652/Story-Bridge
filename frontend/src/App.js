@@ -2013,7 +2013,6 @@ const EndUserDashboard = () => {
               <span>Download More Stories</span>
             </Button>
           </motion.div>
-        )}
       </div>
       
       {/* FR-2: Badge Popup Dialog */}
