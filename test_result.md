@@ -103,11 +103,12 @@
 #====================================================================================================
 
 user_problem_statement: |
-  Complete the StoryBridge Progressive Web App (PWA) as outlined in the specification. 
-  StoryBridge is a mobile-first, offline-capable platform delivering TPRS-based educational 
-  stories for children aged 4–10 in low-connectivity environments. The current implementation 
-  has partial functionality but lacks critical features including offline progress tracking, 
-  quiz answer checking, admin role, analytics, and robust MongoDB sync.
+  Complete the initial setup for StoryBridge by updating the project overview, objectives, 
+  and target users sections in the codebase and documentation. Focus solely on revising 
+  README.md and any config files (e.g., .env, manifest.json) to reflect the mobile-first, 
+  offline-capable PWA for TPRS stories, roles (End User, Creator, Narrator, Admin), and 
+  low-connectivity focus. Emphasize mobile navigation fixes in context. Do not implement 
+  any code features; only update descriptive text and configs.
 
 backend:
   - task: "Authentication System"
