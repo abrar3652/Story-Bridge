@@ -204,10 +204,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "MongoDB Connection"
-    - "Admin Role & Dashboard"
-    - "Offline Functionality"
-    - "Story Player Audio Integration"
+    - "Project Documentation Setup"
+    - "PWA Manifest Configuration"
+    - "HTML Meta Tags & SEO Setup"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
