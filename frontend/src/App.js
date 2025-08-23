@@ -3038,10 +3038,12 @@ const SettingsPage = () => {
   );
 };
 
-// Main Dashboard Router with Admin support
+// Mobile-friendly Dashboard with sidebar navigation
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -3063,34 +3065,163 @@ const Dashboard = () => {
     }
   };
 
+  // Navigation menu items based on role
+  const getMenuItems = () => {
+    const baseItems = [
+      { icon: Home, label: t('nav.home'), onClick: () => navigate('/dashboard') },
+      { icon: Settings, label: t('nav.settings'), onClick: () => navigate('/settings') },
+      { icon: User, label: t('nav.profile'), onClick: () => navigate('/profile') }
+    ];
+
+    const roleSpecific = {
+      end_user: [
+        { icon: Book, label: 'Stories', onClick: () => navigate('/dashboard') },
+        { icon: Trophy, label: 'Progress', onClick: () => {} }
+      ],
+      creator: [
+        { icon: Book, label: 'My Stories', onClick: () => navigate('/dashboard') }
+      ],
+      narrator: [
+        { icon: Mic, label: 'Narrations', onClick: () => navigate('/dashboard') }
+      ],
+      admin: [
+        { icon: Shield, label: 'Admin Panel', onClick: () => navigate('/dashboard') },
+        { icon: Users, label: 'Users', onClick: () => {} },
+        { icon: BarChart3, label: 'Analytics', onClick: () => {} }
+      ]
+    };
+
+    return [...(roleSpecific[user?.role] || []), ...baseItems];
+  };
+
   return (
-    <div className="relative">
-      {/* Enhanced Navigation */}
-      <div className="fixed top-4 right-4 z-50 flex items-center space-x-2">
+    <div className="relative min-h-screen">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <Book className="w-6 h-6 text-orange-500" />
+          <span className="font-semibold text-gray-800">StoryBridge</span>
+        </div>
         <Button
-          onClick={() => navigate('/settings')}
-          variant="outline"
+          variant="ghost"
           size="sm"
+          onClick={() => setSidebarOpen(true)}
+          className="p-2"
         >
-          <Settings className="w-4 h-4" />
-        </Button>
-        <Button
-          onClick={() => navigate('/profile')}
-          variant="outline"
-          size="sm"
-        >
-          <User className="w-4 h-4" />
-        </Button>
-        <Button
-          onClick={handleLogout}
-          variant="outline"
-          size="sm"
-        >
-          <LogOut className="w-4 h-4" />
+          <Settings className="w-5 h-5" />
         </Button>
       </div>
-      
-      {getDashboardComponent()}
+
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <div className="fixed left-4 top-4 bottom-4 w-64 bg-white rounded-2xl shadow-lg border border-gray-200 z-40">
+          <div className="p-6">
+            <div className="flex items-center space-x-3 mb-8">
+              <Book className="w-8 h-8 text-orange-500" />
+              <div>
+                <h2 className="font-semibold text-gray-800">StoryBridge</h2>
+                <p className="text-sm text-gray-500 capitalize">{user?.role?.replace('_', ' ')}</p>
+              </div>
+            </div>
+            
+            <nav className="space-y-2">
+              {getMenuItems().map((item, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className="w-full justify-start text-left hover:bg-orange-50 hover:text-orange-600"
+                  onClick={item.onClick}
+                >
+                  <item.icon className="w-4 h-4 mr-3" />
+                  {item.label}
+                </Button>
+              ))}
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-left text-red-600 hover:bg-red-50"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4 mr-3" />
+                {t('nav.logout')}
+              </Button>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+            />
+            <motion.div
+              className="fixed left-0 top-0 bottom-0 w-80 bg-white z-50 md:hidden"
+              initial={{ x: -320 }}
+              animate={{ x: 0 }}
+              exit={{ x: -320 }}
+              transition={{ type: "spring", damping: 20 }}
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center space-x-3">
+                    <Book className="w-8 h-8 text-orange-500" />
+                    <div>
+                      <h2 className="font-semibold text-gray-800">StoryBridge</h2>
+                      <p className="text-sm text-gray-500 capitalize">{user?.role?.replace('_', ' ')}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+                
+                <nav className="space-y-2">
+                  {getMenuItems().map((item, index) => (
+                    <Button
+                      key={index}
+                      variant="ghost"
+                      className="w-full justify-start text-left hover:bg-orange-50 hover:text-orange-600"
+                      onClick={() => {
+                        item.onClick();
+                        setSidebarOpen(false);
+                      }}
+                    >
+                      <item.icon className="w-4 h-4 mr-3" />
+                      {item.label}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-left text-red-600 hover:bg-red-50"
+                    onClick={() => {
+                      handleLogout();
+                      setSidebarOpen(false);
+                    }}
+                  >
+                    <LogOut className="w-4 h-4 mr-3" />
+                    {t('nav.logout')}
+                  </Button>
+                </nav>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <div className="md:ml-72 min-h-screen">
+        {getDashboardComponent()}
+      </div>
     </div>
   );
 };
