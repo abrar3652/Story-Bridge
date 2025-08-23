@@ -832,6 +832,15 @@ const StoryPlayer = ({ story, onComplete }) => {
   const [selectedWord, setSelectedWord] = useState(null);
   const [tprsCheckpoints, setTprsCheckpoints] = useState([]);
   
+  // FR-2: Enhanced Story Playback Features
+  const [voiceOnlyMode, setVoiceOnlyMode] = useState(false);
+  const [showBadgePopup, setShowBadgePopup] = useState(false);
+  const [currentBadge, setCurrentBadge] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
+  const [audioWordIndex, setAudioWordIndex] = useState(0);
+  const [wordTimestamps, setWordTimestamps] = useState([]);
+  
   const { toast } = useToast();
   const { t } = useTranslation();
   const { user, storage, isOnline } = useAuth();
