@@ -2251,7 +2251,43 @@ const NarratorDashboard = () => {
     });
   };
 
-  const startRecording = async () => {
+  const handleEditNarration = (narration) => {
+    setEditingNarration(narration);
+    setSelectedStory(stories.find(s => s.id === narration.story_id));
+    setVoiceText(narration.text || '');
+    // Note: Audio file from existing narration cannot be edited, only replaced
+    setAudioFile(null);
+  };
+
+  const handleDeleteNarration = async (narrationId) => {
+    if (!window.confirm('Are you sure you want to delete this narration?')) return;
+    
+    try {
+      await axios.delete(`${API}/narrations/${narrationId}`);
+      toast({
+        title: "Narration deleted",
+        description: "Narration has been removed successfully.",
+      });
+      fetchNarrations();
+    } catch (error) {
+      toast({
+        title: t('error.general'),
+        description: error.response?.data?.detail || t('error.network'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setSelectedStory(null);
+    setEditingNarration(null);
+    setAudioFile(null);
+    setVoiceText('');
+    setRecordedBlobs([]);
+    if (mediaRecorder && isRecording) {
+      stopRecording();
+    }
+  };
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
