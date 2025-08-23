@@ -1012,6 +1012,12 @@ const StoryPlayer = ({ story, onComplete }) => {
       const newTime = Math.min(currentTime + 15, duration);
       sound.seek(newTime);
       setCurrentTime(newTime);
+      
+      // FR-2: Add haptic feedback
+      triggerHaptics('light');
+      
+      // FR-2: Add audio cue
+      playAudioCue('forward');
     }
   };
 
@@ -1020,7 +1026,166 @@ const StoryPlayer = ({ story, onComplete }) => {
       const newTime = Math.max(currentTime - 15, 0);
       sound.seek(newTime);
       setCurrentTime(newTime);
+      
+      // FR-2: Add haptic feedback  
+      triggerHaptics('light');
+      
+      // FR-2: Add audio cue
+      playAudioCue('backward');
     }
+  };
+  
+  // FR-2: Voice Commands Setup
+  const setupVoiceCommands = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const newRecognition = new SpeechRecognition();
+      
+      newRecognition.continuous = true;
+      newRecognition.interimResults = false;
+      newRecognition.lang = story.language === 'ar' ? 'ar-SA' : 'en-US';
+      
+      newRecognition.onresult = (event) => {
+        const command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+        handleVoiceCommand(command);
+      };
+      
+      newRecognition.onerror = (event) => {
+        console.warn('Voice recognition error:', event.error);
+        setIsListening(false);
+      };
+      
+      setRecognition(newRecognition);
+    }
+  };
+  
+  const handleVoiceCommand = (command) => {
+    const commands = {
+      'play': () => !isPlaying && togglePlay(),
+      'pause': () => isPlaying && togglePlay(),
+      'stop': () => isPlaying && togglePlay(),
+      'forward': skipForward,
+      'backward': skipBackward,
+      'back': skipBackward,
+      'next': skipForward,
+      'voice only': () => setVoiceOnlyMode(true),
+      'show images': () => setVoiceOnlyMode(false),
+      'repeat': () => sound && sound.seek(0)
+    };
+    
+    // Check for command matches
+    Object.entries(commands).forEach(([trigger, action]) => {
+      if (command.includes(trigger)) {
+        action();
+        triggerHaptics('medium');
+        toast({
+          title: "Voice Command",
+          description: `Executed: ${trigger}`,
+          duration: 1500
+        });
+      }
+    });
+  };
+  
+  const toggleVoiceCommands = () => {
+    if (!recognition) return;
+    
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      recognition.start();
+      setIsListening(true);
+    }
+  };
+  
+  // FR-2: Haptic Feedback
+  const triggerHaptics = (intensity = 'light') => {
+    if ('vibrate' in navigator) {
+      const patterns = {
+        light: 50,
+        medium: [100, 50, 100],
+        heavy: [200, 100, 200]
+      };
+      navigator.vibrate(patterns[intensity] || patterns.light);
+    }
+  };
+  
+  // FR-2: Audio Cues
+  const playAudioCue = (type) => {
+    const cues = {
+      forward: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzqV3/DFdiABGnze7t+QQQ8OTaXl7apSGQpBnN7zv2oh',
+      backward: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzqV3/DFdiABGnze7t+QQQ8OTaXl7apSGQpBnN7zv2oh',
+      badge: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzqV3/DFdiABGnze7t+QQQ8OTaXl7apSGQpBnN7zv2oh'
+    };
+    
+    if (cues[type]) {
+      const audio = new Audio(cues[type]);
+      audio.volume = 0.3;
+      audio.play().catch(() => {});
+    }
+  };
+  
+  // FR-2: Word Timestamps for Audio-Text Sync
+  const setupWordTimestamps = () => {
+    const words = story.text.split(/\s+/);
+    const avgWordsPerSecond = 2.5; // Estimated speaking speed
+    
+    const timestamps = words.map((word, index) => ({
+      word,
+      startTime: index / avgWordsPerSecond,
+      endTime: (index + 1) / avgWordsPerSecond,
+      index
+    }));
+    
+    setWordTimestamps(timestamps);
+  };
+  
+  const updateWordHighlight = (currentTime) => {
+    const currentWord = wordTimestamps.find(
+      w => currentTime >= w.startTime && currentTime < w.endTime
+    );
+    
+    if (currentWord && currentWord.index !== audioWordIndex) {
+      setAudioWordIndex(currentWord.index);
+    }
+  };
+  
+  // FR-2: Badge Popup System
+  const showBadge = (badgeType, metadata = {}) => {
+    const badgeData = {
+      story_starter: { 
+        icon: '🌟', 
+        title: 'Story Starter!', 
+        description: 'Completed your first story!' 
+      },
+      word_wizard: { 
+        icon: '🧙‍♂️', 
+        title: 'Word Wizard!', 
+        description: 'Learned 10 vocabulary words!' 
+      },
+      quiz_master: { 
+        icon: '🏆', 
+        title: 'Quiz Master!', 
+        description: 'Aced 5 quizzes in a row!' 
+      }
+    };
+    
+    const badge = badgeData[badgeType] || {
+      icon: '🎖️',
+      title: 'Achievement Unlocked!',
+      description: 'Great job learning!'
+    };
+    
+    setCurrentBadge({...badge, ...metadata});
+    setShowBadgePopup(true);
+    
+    // Auto-hide after 4 seconds
+    setTimeout(() => setShowBadgePopup(false), 4000);
+    
+    // Play badge sound and haptics
+    playAudioCue('badge');
+    triggerHaptics('heavy');
   };
 
   const handleQuizAnswer = async (answer) => {
