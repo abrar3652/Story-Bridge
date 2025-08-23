@@ -939,6 +939,34 @@ async def get_all_users(admin_user: User = Depends(get_admin_user)):
     users = await db.users.find({}, {"password": 0, "mfa_secret": 0}).to_list(100)
     return [User(**user) for user in users]
 
+# Admin creation endpoint (for initial setup only)
+@api_router.post("/auth/create-initial-admin")
+async def create_initial_admin():
+    """Create initial admin user for system setup"""
+    try:
+        # Check if admin already exists
+        existing_admin = await db.users.find_one({"role": "admin"})
+        if existing_admin:
+            raise HTTPException(status_code=400, detail="Admin user already exists")
+        
+        # Create admin user
+        admin_data = {
+            "id": str(uuid.uuid4()),
+            "email": "admin@storybridge.com",
+            "password": get_password_hash("admin123"),
+            "role": "admin",
+            "language": "en",
+            "mfa_enabled": False,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        await db.users.insert_one(admin_data)
+        
+        return {"message": "Initial admin user created successfully", "email": "admin@storybridge.com"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating admin: {str(e)}")
+
 @api_router.delete("/admin/users/{user_id}")
 async def delete_user(user_id: str, admin_user: User = Depends(get_admin_user)):
     if user_id == admin_user.id:
