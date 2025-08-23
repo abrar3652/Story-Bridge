@@ -1908,51 +1908,6 @@ const CreatorDashboard = () => {
     );
   }
 
-  const handleEdit = (story) => {
-    setEditingStory(story);
-    setFormData({
-      title: story.title,
-      text: story.text,
-      language: story.language,
-      age_group: story.age_group,
-      vocabulary: story.vocabulary.join(', '),
-      quizzes: JSON.stringify(story.quizzes, null, 2)
-    });
-    setShowForm(true);
-  };
-
-  const handleDelete = async (storyId) => {
-    if (!window.confirm('Are you sure you want to delete this story?')) return;
-    
-    try {
-      await axios.delete(`${API}/stories/${storyId}`);
-      toast({
-        title: "Story deleted",
-        description: "Story has been removed successfully.",
-      });
-      fetchCreatorStories();
-    } catch (error) {
-      toast({
-        title: t('error.general'),
-        description: error.response?.data?.detail || t('error.network'),
-        variant: "destructive",
-      });
-    }
-  };
-
-  const resetForm = () => {
-    setShowForm(false);
-    setEditingStory(null);
-    setFormData({
-      title: '',
-      text: '',
-      language: 'en',
-      age_group: '4-6',
-      vocabulary: '',
-      quizzes: ''
-    });
-  };
-
   if (showForm) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
