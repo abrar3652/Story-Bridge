@@ -1429,24 +1429,93 @@ const StoryPlayer = ({ story, onComplete }) => {
               <Badge variant="secondary">{story.age_group} years</Badge>
             </CardHeader>
             <CardContent>
-              <div className="text-center mb-8">
-                <div className="bg-white rounded-lg p-8 mb-6 shadow-inner">
-                  <Book className="w-24 h-24 mx-auto text-orange-500 mb-4" />
-                  <p className="text-lg leading-relaxed text-gray-700">
-                    {story.text}
-                  </p>
+              {/* FR-2: Voice-Only/Illustration Toggle & Voice Commands */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center space-x-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setVoiceOnlyMode(!voiceOnlyMode)}
+                    className={voiceOnlyMode ? 'bg-blue-100' : ''}
+                  >
+                    {voiceOnlyMode ? '👂 Voice Only' : '📖 Show Text & Images'}
+                  </Button>
+                  
+                  {recognition && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleVoiceCommands}
+                      className={isListening ? 'bg-red-100' : ''}
+                    >
+                      {isListening ? '🎤 Listening...' : '🎤 Voice Commands'}
+                    </Button>
+                  )}
                 </div>
                 
+                <Badge variant={isOnline ? 'default' : 'secondary'}>
+                  {isOnline ? '🌐 Online' : '📱 Offline'}
+                </Badge>
+              </div>
+              
+              <div className="text-center mb-8">
+                {!voiceOnlyMode && (
+                  <div className="bg-white rounded-lg p-8 mb-6 shadow-inner">
+                    <Book className="w-24 h-24 mx-auto text-orange-500 mb-4" />
+                    {/* FR-2: Enhanced text with word highlighting */}
+                    <div className="text-lg leading-relaxed text-gray-700">
+                      {story.text.split(/\s+/).map((word, index) => (
+                        <span
+                          key={index}
+                          className={`${
+                            index === audioWordIndex 
+                              ? 'bg-yellow-200 text-yellow-900 font-semibold' 
+                              : 'hover:bg-gray-100'
+                          } transition-colors duration-200 cursor-pointer px-1 rounded`}
+                          onClick={() => {
+                            if (sound && wordTimestamps[index]) {
+                              sound.seek(wordTimestamps[index].startTime);
+                            }
+                          }}
+                        >
+                          {word}
+                        </span>
+                      )).reduce((prev, curr, index) => [prev, ' ', curr])}
+                    </div>
+                  </div>
+                )}
+                
+                {voiceOnlyMode && (
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-12 mb-6 shadow-inner">
+                    <Volume2 className="w-32 h-32 mx-auto text-blue-500 mb-6 animate-pulse" />
+                    <h3 className="text-2xl font-semibold text-blue-800 mb-2">Voice-Only Mode</h3>
+                    <p className="text-blue-600 text-lg">
+                      Listen carefully and focus on the story narration
+                    </p>
+                    <div className="mt-4 space-y-2">
+                      <div className="text-sm text-blue-500">
+                        📚 Story: {story.title}
+                      </div>
+                      <div className="text-sm text-blue-500">
+                        🎯 Vocabulary: {story.vocabulary.join(', ')}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* FR-2: Enhanced Controls with 15-second skip */}
                 <div className="space-y-4">
                   <div className="flex justify-center space-x-4">
-                    <Button onClick={skipBackward} variant="outline" size="lg">
+                    <Button onClick={skipBackward} variant="outline" size="lg" title="Skip back 15 seconds">
                       <SkipBack className="w-6 h-6" />
+                      <span className="ml-2 text-sm">15s</span>
                     </Button>
                     <Button onClick={togglePlay} size="lg" className="px-8">
                       {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
                     </Button>
-                    <Button onClick={skipForward} variant="outline" size="lg">
+                    <Button onClick={skipForward} variant="outline" size="lg" title="Skip forward 15 seconds">
                       <SkipForward className="w-6 h-6" />
+                      <span className="ml-2 text-sm">15s</span>
                     </Button>
                   </div>
                   
