@@ -1812,16 +1812,101 @@ const CreatorDashboard = () => {
     setTprsValidation({ valid: true, message: '' });
   };
       
-      resetForm();
-      fetchCreatorStories();
-    } catch (error) {
-      toast({
-        title: t('error.general'),
-        description: error.response?.data?.detail || t('error.network'),
-        variant: "destructive",
-      });
-    }
-  };
+  if (previewMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex justify-between items-center">
+                  <span>Story Preview</span>
+                  <Button onClick={() => setPreviewMode(false)} variant="outline">
+                    <X className="w-4 h-4 mr-2" />
+                    Close Preview
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-gray-50 p-6 rounded-lg">
+                  <h2 className="text-2xl font-bold mb-4">{formData.title}</h2>
+                  <Badge className="mb-4">{formData.age_group} years • {formData.language}</Badge>
+                  <div className="prose max-w-none">
+                    <p className="leading-relaxed">{formData.text}</p>
+                  </div>
+                  
+                  {uploadedImages.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="font-semibold mb-3">Images:</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {uploadedImages.map((img) => (
+                          <div key={img.id} className="border rounded-lg p-2">
+                            <img 
+                              src={img.preview} 
+                              alt={img.name}
+                              className="w-full h-24 object-cover rounded"
+                            />
+                            <p className="text-xs text-gray-500 mt-1 truncate">{img.name}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6">
+                    <h4 className="font-semibold mb-2">Vocabulary ({formData.vocabulary.split(',').length} words):</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.vocabulary.split(',').map((word, index) => (
+                        <Badge key={index} variant="secondary">{word.trim()}</Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {formData.quizzes && (
+                    <div className="mt-6">
+                      <h4 className="font-semibold mb-2">Quiz Questions:</h4>
+                      <div className="bg-white p-4 rounded border">
+                        <pre className="text-sm overflow-x-auto">{formData.quizzes}</pre>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 p-3 rounded-lg" style={{
+                    backgroundColor: tprsValidation.valid ? '#f0fdf4' : '#fef2f2',
+                    borderLeft: `4px solid ${tprsValidation.valid ? '#22c55e' : '#ef4444'}`
+                  }}>
+                    <p className={`text-sm font-medium ${tprsValidation.valid ? 'text-green-700' : 'text-red-700'}`}>
+                      {tprsValidation.message || 'TPRS validation not completed'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <Button onClick={() => setPreviewMode(false)} variant="outline">
+                    Back to Edit
+                  </Button>
+                  <div className="space-x-2">
+                    <Button onClick={(e) => handleSubmit(e, true)} disabled={!isOnline}>
+                      Save as Draft
+                    </Button>
+                    <Button 
+                      onClick={(e) => handleSubmit(e, false)} 
+                      disabled={!isOnline || !tprsValidation.valid}
+                    >
+                      Submit for Review
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   const handleEdit = (story) => {
     setEditingStory(story);
