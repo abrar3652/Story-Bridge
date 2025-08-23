@@ -959,45 +959,182 @@ async def delete_user(user_id: str, admin_user: User = Depends(get_admin_user)):
 # Mock stories for development
 @api_router.post("/mock-stories")
 async def create_mock_stories():
-    mock_stories = [
+    """Create comprehensive mock stories for testing - 10 stories total"""
+    
+    # Mock stories data with enhanced content
+    mock_stories_data = [
+        # Ages 4-6 Stories (5 stories)
         {
-            "id": str(uuid.uuid4()),
-            "title": "The Brave Sparrow",
-            "text": "Once upon a time, in a beautiful garden, there lived a brave sparrow named Pip. Pip was brave, very brave indeed. Every morning, the brave sparrow would fly high in the sky. The sparrow loved to fly, fly, fly above the trees. One day, Pip saw a little cat stuck in a tree. The brave sparrow decided to help. Pip flew down to help the cat. The sparrow was so brave! With courage, the brave sparrow guided the cat to safety. From that day, everyone knew Pip was the bravest sparrow in the garden.",
+            "title": "The Brave Little Sparrow",
+            "text": "Once upon a time, there lived a brave little sparrow named Sam. Sam was brave when he helped his friends. Every day, Sam would fly with his brave wings. The other birds loved Sam because he was so brave. Sam's brave heart made him special. When danger came, Sam was brave and protected everyone. Sam's brave spirit inspired all the forest animals. The brave little sparrow Sam became a hero. Everyone remembered how brave Sam was. Sam's brave actions saved the day. The brave sparrow Sam was loved by all.",
             "language": "en",
             "age_group": "4-6",
-            "vocabulary": ["brave", "sparrow", "fly", "courage", "garden"],
+            "vocabulary": ["brave", "sparrow", "fly"],
             "quizzes": [
-                {"type": "true_false", "question": "Pip was a brave sparrow?", "answer": True},
-                {"type": "multiple_choice", "question": "What did Pip love to do?", "options": ["swim", "fly", "run"], "answer": "fly"},
-                {"type": "fill_blank", "question": "Pip was a very _____ sparrow.", "answer": "brave"}
+                {"type": "true_false", "question": "Sam was a brave sparrow?", "answer": True},
+                {"type": "multiple_choice", "question": "What could Sam do?", "options": ["fly", "swim", "run"], "answer": "fly"},
+                {"type": "fill_blank", "question": "Sam was a ____ little sparrow", "answer": "brave"}
             ],
-            "creator_id": "system",
-            "status": "published",
-            "created_at": datetime.now(timezone.utc)
+            "status": "pending"
         },
         {
-            "id": str(uuid.uuid4()),
-            "title": "The Magic Tree",
-            "text": "In an enchanted forest, there grew a magic tree. The tree was magic, truly magic! This magic tree could grant wishes. Every child in the village knew about the magic tree. One day, a kind girl named Luna visited the magic tree. She wished for happiness for everyone. The magic tree glowed with golden light. The tree granted her wish! From that day, the magic tree brought joy to all who visited. The magic tree was loved by everyone in the enchanted forest.",
-            "language": "en", 
-            "age_group": "7-10",
-            "vocabulary": ["magic", "enchanted", "wishes", "granted", "golden"],
+            "title": "العصفور الصغير الشجاع",
+            "text": "كان يا ما كان، عصفور صغير شجاع اسمه سام. سام كان شجاع عندما ساعد أصدقاءه. كل يوم، سام كان يطير بجناحيه الشجاع. الطيور الأخرى أحبت سام لأنه كان شجاع جداً. قلب سام الشجاع جعله مميزاً. عندما جاء الخطر، سام كان شجاع وحمى الجميع. روح سام الشجاع ألهمت كل حيوانات الغابة. العصفور الصغير الشجاع سام أصبح بطلاً. الجميع تذكر كم كان سام شجاع. أعمال سام الشجاع أنقذت اليوم.",
+            "language": "ar",
+            "age_group": "4-6",
+            "vocabulary": ["شجاع", "عصفور", "يطير"],
             "quizzes": [
-                {"type": "true_false", "question": "The tree could grant wishes?", "answer": True},
-                {"type": "multiple_choice", "question": "What did Luna wish for?", "options": ["money", "happiness", "toys"], "answer": "happiness"},
-                {"type": "fill_blank", "question": "The tree was _____ and could grant wishes.", "answer": "magic"}
+                {"type": "true_false", "question": "سام كان عصفور شجاع؟", "answer": True},
+                {"type": "multiple_choice", "question": "ماذا يستطيع سام أن يفعل؟", "options": ["يطير", "يسبح", "يجري"], "answer": "يطير"}
             ],
-            "creator_id": "system",
-            "status": "published",
-            "created_at": datetime.now(timezone.utc)
+            "status": "pending"
+        },
+        {
+            "title": "The Magic Garden",
+            "text": "In a magic garden, flowers could talk and dance. The magic garden had magic flowers everywhere. Every magic flower in the garden could sing beautiful songs. Children loved visiting the magic garden to see the magic flowers. The magic garden's magic flowers bloomed in rainbow colors. When the sun shone, the magic flowers in the magic garden sparkled. The magic garden was home to many magic creatures. Everyone who visited the magic garden felt happy because of the magic flowers. The magic garden's magic lasted forever.",
+            "language": "en", 
+            "age_group": "4-6",
+            "vocabulary": ["magic", "garden", "flowers"],
+            "quizzes": [
+                {"type": "true_false", "question": "The flowers in the garden could talk?", "answer": True},
+                {"type": "fill_blank", "question": "The ____ garden had talking flowers", "answer": "magic"}
+            ],
+            "status": "pending"
+        },
+        {
+            "title": "القط الذكي",
+            "text": "كان هناك قط ذكي يحب اللعب. القط الذكي كان يحل المشاكل بطريقة ذكي. كل يوم، القط الذكي يتعلم شيئاً جديداً. الأطفال أحبوا القط الذكي لأنه كان ذكي جداً. القط الذكي علم الأطفال أن يكونوا ذكي مثله. عندما كانت هناك مشكلة، القط الذكي يجد الحل بطريقة ذكي. القط الذكي أصبح مشهوراً في الحي. الجميع عرف أن القط ذكي ومفيد.",
+            "language": "ar",
+            "age_group": "4-6", 
+            "vocabulary": ["ذكي", "قط", "يتعلم"],
+            "quizzes": [
+                {"type": "true_false", "question": "القط كان ذكي؟", "answer": True},
+                {"type": "fill_blank", "question": "القط ____ يحب التعلم", "answer": "ذكي"}
+            ],
+            "status": "pending"
+        },
+        {
+            "title": "The Dancing Rainbow",
+            "text": "High in the sky, a rainbow loved to dance. The rainbow would dance across the sky every day. When the rainbow dance, all the children below would smile. The dancing rainbow had seven beautiful colors that dance together. The rainbow's dance made everyone happy who watched it dance. During rain, the rainbow would dance even more beautifully. The dancing rainbow became famous for its magical dance. Everyone waited to see the rainbow dance after every storm. The rainbow's dance brought joy to the world.",
+            "language": "en",
+            "age_group": "4-6",
+            "vocabulary": ["rainbow", "dance", "colors"], 
+            "quizzes": [
+                {"type": "true_false", "question": "The rainbow loved to dance?", "answer": True},
+                {"type": "multiple_choice", "question": "How many colors did the rainbow have?", "options": ["five", "six", "seven"], "answer": "seven"}
+            ],
+            "status": "pending"
+        },
+        
+        # Ages 7-10 Stories (5 stories)  
+        {
+            "title": "The Adventure of the Crystal Cave",
+            "text": "Maya discovered an adventure waiting in the mysterious crystal cave. The adventure began when Maya found the sparkling entrance. Inside the crystal cave, Maya's adventure became more exciting with each step. The crystal formations created a magical adventure for Maya to explore. Every corner of the crystal cave held a new adventure. Maya's adventure in the crystal cave taught her about courage and friendship. The crystal cave's adventure challenged Maya to solve ancient puzzles. Through her adventure, Maya learned that the crystal cave was protecting the forest. Maya's adventure in the crystal cave became a legend that inspired other young explorers.",
+            "language": "en",
+            "age_group": "7-10",
+            "vocabulary": ["adventure", "crystal", "cave"],
+            "quizzes": [
+                {"type": "true_false", "question": "Maya found a crystal cave?", "answer": True},
+                {"type": "multiple_choice", "question": "What did Maya's adventure teach her?", "options": ["cooking", "courage and friendship", "swimming"], "answer": "courage and friendship"},
+                {"type": "fill_blank", "question": "Maya discovered an ____ in the crystal cave", "answer": "adventure"}
+            ],
+            "status": "pending"
+        },
+        {
+            "title": "مغامرة الكهف الكريستالي",
+            "text": "اكتشفت مايا مغامرة تنتظرها في كهف كريستالي غامض. المغامرة بدأت عندما وجدت مايا المدخل اللامع. داخل الكهف الكريستالي، مغامرة مايا أصبحت أكثر إثارة مع كل خطوة. التكوينات الكريستالية خلقت مغامرة سحرية لمايا لاستكشافها. كل زاوية في الكهف الكريستالي احتوت على مغامرة جديدة. مغامرة مايا في الكهف الكريستالي علمتها عن الشجاعة والصداقة. مغامرة الكهف الكريستالي تحدت مايا لحل الألغاز القديمة. من خلال مغامرتها، تعلمت مايا أن الكهف الكريستالي كان يحمي الغابة.",
+            "language": "ar",
+            "age_group": "7-10",
+            "vocabulary": ["مغامرة", "كريستالي", "كهف"],
+            "quizzes": [
+                {"type": "true_false", "question": "مايا وجدت كهف كريستالي؟", "answer": True},
+                {"type": "fill_blank", "question": "اكتشفت مايا ____ في الكهف", "answer": "مغامرة"}
+            ],
+            "status": "pending"
+        },
+        {
+            "title": "The Time-Traveling Bicycle",
+            "text": "Alex inherited a mysterious bicycle that could travel through time. The bicycle looked ordinary, but it had the power to travel to any era. When Alex rode the bicycle, he would travel back to ancient civilizations. The time-traveling bicycle took Alex on incredible journeys through history. Each bicycle ride became a new time-travel adventure. Alex learned that the bicycle belonged to his grandfather, who was also a time traveler. The bicycle taught Alex important lessons about history and responsibility. Through bicycle adventures, Alex discovered that small actions could change the course of history.",
+            "language": "en",
+            "age_group": "7-10", 
+            "vocabulary": ["bicycle", "travel", "time"],
+            "quizzes": [
+                {"type": "true_false", "question": "Alex's bicycle could travel through time?", "answer": True},
+                {"type": "multiple_choice", "question": "Who did the bicycle belong to before Alex?", "options": ["his father", "his grandfather", "his teacher"], "answer": "his grandfather"}
+            ],
+            "status": "pending"
+        },
+        {
+            "title": "رحلة إلى القمر",
+            "text": "قررت سارة أن تذهب في رحلة إلى القمر مع روبوتها الذكي. الرحلة إلى القمر كانت حلم سارة منذ الطفولة. عندما بدأت الرحلة، سارة شعرت بالإثارة الكبيرة. الرحلة إلى القمر استغرقت ثلاثة أيام في المركبة الفضائية. خلال الرحلة، سارة رأت النجوم والكواكب الجميلة. عندما وصلت سارة إلى القمر، وجدت أن الرحلة كانت تستحق الانتظار. الرحلة إلى القمر علمت سارة عن الشجاعة والاستكشاف. سارة قررت أن تصبح رائدة فضاء بعد هذه الرحلة المذهلة.",
+            "language": "ar", 
+            "age_group": "7-10",
+            "vocabulary": ["رحلة", "قمر", "فضاء"],
+            "quizzes": [
+                {"type": "true_false", "question": "سارة ذهبت في رحلة إلى القمر؟", "answer": True},
+                {"type": "fill_blank", "question": "سارة ذهبت في ____ إلى القمر", "answer": "رحلة"}
+            ],
+            "status": "pending"
+        },
+        {
+            "title": "The Secret of the Ancient Library",
+            "text": "Emma discovered that the old library in her neighborhood held ancient secrets. The library contained books that were hundreds of years old with ancient knowledge. Every book in the ancient library seemed to whisper secrets to Emma. The librarian told Emma that the library was built over an ancient temple. Emma spent hours exploring the ancient sections of the library. She found that ancient civilizations had left messages in the books. The ancient library became Emma's favorite place to learn about history. Emma realized that the library was a guardian of ancient wisdom that needed to be protected.",
+            "language": "en",
+            "age_group": "7-10",
+            "vocabulary": ["library", "ancient", "secrets"], 
+            "quizzes": [
+                {"type": "true_false", "question": "The library contained ancient books?", "answer": True},
+                {"type": "multiple_choice", "question": "What was the library built over?", "options": ["ancient temple", "old house", "modern building"], "answer": "ancient temple"},
+                {"type": "fill_blank", "question": "Emma discovered ____ in the old library", "answer": "secrets"}
+            ],
+            "status": "pending"
         }
     ]
     
-    for story in mock_stories:
-        await db.stories.insert_one(story)
-    
-    return {"message": f"Created {len(mock_stories)} mock stories"}
+    try:
+        # Clear existing mock stories to avoid duplicates
+        await db.stories.delete_many({"creator_id": "mock_creator"})
+        
+        # Create mock creator user if doesn't exist
+        mock_creator = {
+            "id": "mock_creator",
+            "email": "creator@storybridge.mock",
+            "password": get_password_hash("mock123"),
+            "role": "creator",
+            "language": "en",
+            "mfa_enabled": False,
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        await db.users.update_one(
+            {"id": "mock_creator"},
+            {"$set": mock_creator},
+            upsert=True
+        )
+        
+        # Insert mock stories
+        stories_to_insert = []
+        for story_data in mock_stories_data:
+            story = Story(
+                **story_data,
+                creator_id="mock_creator",
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
+            )
+            stories_to_insert.append(story.dict())
+        
+        result = await db.stories.insert_many(stories_to_insert)
+        
+        return {
+            "message": f"Successfully created {len(result.inserted_ids)} mock stories",
+            "stories_created": len(result.inserted_ids),
+            "languages": ["en", "ar"],
+            "age_groups": ["4-6", "7-10"],
+            "status": "All stories created in 'pending' state for admin approval"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating mock stories: {str(e)}")
 
 # Include router and middleware
 app.include_router(api_router)
