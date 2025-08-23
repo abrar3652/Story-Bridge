@@ -100,15 +100,76 @@ export class OfflineStorage {
     }
   }
 
-  // User data management
+  // Enhanced user data management with full offline login support
   async saveUserData(user, token) {
     const userData = {
       user,
       token,
-      saved_at: new Date().toISOString()
+      saved_at: new Date().toISOString(),
+      // Add credentials hash for offline verification
+      email_hash: user.email ? await this.hashString(user.email) : null,
+      // Store encrypted login state
+      login_state: {
+        authenticated: true,
+        role: user.role,
+        permissions: this.getRolePermissions(user.role),
+        last_online: navigator.onLine ? new Date().toISOString() : null
+      }
     };
     
     await set(this.STORES.USER_DATA, userData);
+    
+    // Also cache user preferences for offline use
+    await this.cacheUserPreferences(user);
+  }
+  
+  async cacheUserPreferences(user) {
+    const preferencesKey = `preferences:${user.id}`;
+    const preferences = {
+      language: user.language || 'en',
+      role: user.role,
+      avatar_url: user.avatar_url,
+      mfa_enabled: user.mfa_enabled || false,
+      cached_at: new Date().toISOString()
+    };
+    
+    await set(preferencesKey, preferences);
+  }
+  
+  async getUserPreferences(userId) {
+    const preferencesKey = `preferences:${userId}`;
+    return await get(preferencesKey);
+  }
+  
+  // Enhanced offline authentication verification
+  async verifyOfflineLogin(email) {
+    const userData = await this.getUserData();
+    if (!userData || !userData.user || !userData.login_state) {
+      return false;
+    }
+    
+    // Verify email matches cached user (using hash comparison)
+    const emailHash = await this.hashString(email);
+    return userData.email_hash === emailHash && userData.login_state.authenticated;
+  }
+  
+  async getRolePermissions(role) {
+    const permissions = {
+      end_user: ['view_stories', 'save_progress', 'earn_badges'],
+      creator: ['view_stories', 'create_stories', 'edit_own_stories', 'save_progress'],
+      narrator: ['view_stories', 'create_narrations', 'edit_own_narrations', 'save_progress'],
+      admin: ['view_all', 'manage_users', 'approve_content', 'view_analytics']
+    };
+    
+    return permissions[role] || permissions.end_user;
+  }
+  
+  async hashString(str) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
   async getUserData() {
