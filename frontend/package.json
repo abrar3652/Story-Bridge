@@ -1,6 +1,9 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "storybridge-pwa",
+  "version": "1.1.0",
+  "description": "Mobile-first, offline-capable PWA delivering TPRS-based educational stories for children aged 4-10 in low-connectivity environments",
+  "keywords": ["TPRS", "educational-stories", "PWA", "offline-learning", "children-education", "mobile-first", "low-connectivity"],
+  "author": "StoryBridge Team",
   "private": true,
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
