@@ -275,6 +275,106 @@ export class OfflineStorage {
     await del(audioKey);
   }
 
+  // FR-3: Enhanced Story Pack Management for 10-15 stories
+  async downloadStoryPack(story) {
+    try {
+      // Download and cache the story
+      await this.cacheStory(story);
+      
+      // Download audio if available
+      if (story.audio_id) {
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/audio/${story.audio_id}`);
+          if (response.ok) {
+            const audioBlob = await response.blob();
+            await this.cacheAudioFile(story.audio_id, audioBlob);
+          }
+        } catch (error) {
+          console.warn('Failed to download audio:', error);
+        }
+      }
+      
+      // Mark as downloaded
+      await this.addToDownloadedStories(story.id);
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to download story pack:', error);
+      return false;
+    }
+  }
+  
+  async addToDownloadedStories(storyId) {
+    const downloadKey = 'downloadedStories';
+    const downloaded = await get(downloadKey) || [];
+    
+    if (!downloaded.includes(storyId)) {
+      downloaded.push(storyId);
+      await set(downloadKey, downloaded);
+    }
+  }
+  
+  async getDownloadedStories() {
+    const downloadKey = 'downloadedStories';
+    const storyIds = await get(downloadKey) || [];
+    
+    const stories = [];
+    for (const storyId of storyIds) {
+      const story = await this.getCachedStory(storyId);
+      if (story) {
+        stories.push(story);
+      }
+    }
+    
+    return stories;
+  }
+  
+  async removeFromDownloadedStories(storyId) {
+    const downloadKey = 'downloadedStories';
+    const downloaded = await get(downloadKey) || [];
+    
+    const filtered = downloaded.filter(id => id !== storyId);
+    await set(downloadKey, filtered);
+    
+    // Also remove cached story and audio
+    await this.removeStory(storyId);
+    
+    const story = await this.getCachedStory(storyId);
+    if (story?.audio_id) {
+      await this.removeCachedAudioFile(story.audio_id);
+    }
+  }
+  
+  async getStorageUsage() {
+    const allKeys = await keys();
+    let totalSize = 0;
+    
+    for (const key of allKeys) {
+      try {
+        const data = await get(key);
+        const dataStr = JSON.stringify(data);
+        totalSize += new Blob([dataStr]).size;
+      } catch (error) {
+        console.warn('Error calculating size for key:', key);
+      }
+    }
+    
+    return {
+      totalSize,
+      humanReadable: this.formatBytes(totalSize),
+      storiesCount: allKeys.filter(k => k.startsWith(this.STORES.STORIES)).length,
+      audioCount: allKeys.filter(k => k.startsWith(this.STORES.AUDIO)).length
+    };
+  }
+  
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
   // Vocabulary tracking
   async saveVocabularyProgress(userId, word, repetitions = 1, learned = false) {
     const vocabKey = `vocab:${userId}:${word}`;
