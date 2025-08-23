@@ -1224,7 +1224,7 @@ const StoryPlayer = ({ story, onComplete }) => {
 };
 
 // Continue with the rest of the enhanced components...
-// Enhanced End User Dashboard with offline support
+// Enhanced End User Dashboard with word cloud and progress tracking
 const EndUserDashboard = () => {
   const [stories, setStories] = useState([]);
   const [selectedStory, setSelectedStory] = useState(null);
@@ -1233,6 +1233,10 @@ const EndUserDashboard = () => {
   const [badges, setBadges] = useState([]);
   const [ageFilter, setAgeFilter] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [wordCloudData, setWordCloudData] = useState([]);
+  const [downloadedStories, setDownloadedStories] = useState(new Set());
+  const [currentTab, setCurrentTab] = useState('stories');
   
   const { user, isOnline, storage } = useAuth();
   const { toast } = useToast();
@@ -1248,12 +1252,145 @@ const EndUserDashboard = () => {
       await Promise.all([
         fetchStories(),
         fetchProgress(),
-        loadCoinsAndBadges()
+        loadCoinsAndBadges(),
+        loadDownloadedStories()
       ]);
     } finally {
       setLoading(false);
     }
   };
+
+  const loadDownloadedStories = async () => {
+    try {
+      const downloaded = await storage.getDownloadedStories();
+      setDownloadedStories(new Set(downloaded.map(s => s.id)));
+    } catch (error) {
+      console.error('Error loading downloaded stories:', error);
+    }
+  };
+
+  const downloadStoryForOffline = async (story) => {
+    try {
+      await storage.downloadStoryPack(story);
+      setDownloadedStories(prev => new Set([...prev, story.id]));
+      
+      toast({
+        title: "Story Downloaded!",
+        description: `${story.title} is now available offline`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not download story for offline use",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateWordCloudData = () => {
+    if (userProgress.length === 0) return [];
+
+    const wordCounts = {};
+    userProgress.forEach(progress => {
+      if (progress.vocabulary) {
+        progress.vocabulary.forEach(word => {
+          const wordKey = typeof word === 'object' ? word.word : word;
+          const repetitions = typeof word === 'object' ? word.repetitions || 1 : 1;
+          wordCounts[wordKey] = (wordCounts[wordKey] || 0) + repetitions;
+        });
+      }
+    });
+
+    return Object.entries(wordCounts).map(([word, count]) => ({
+      text: word,
+      value: count * 10, // Scale for better visualization
+      color: `hsl(${Math.random() * 360}, 70%, 50%)`
+    }));
+  };
+
+  const handleWordClick = (word) => {
+    // Play audio pronunciation if available
+    const utterance = new SpeechSynthesisUtterance(word.text);
+    utterance.lang = user?.language || 'en';
+    speechSynthesis.speak(utterance);
+    
+    toast({
+      title: `Word: ${word.text}`,
+      description: `You've learned this word ${Math.floor(word.value / 10)} times!`,
+    });
+  };
+
+  const generateProgressReport = () => {
+    const report = {
+      user: user?.email,
+      totalStories: userProgress.length,
+      totalCoins: totalCoins,
+      badges: badges.map(b => b.name),
+      vocabularyLearned: wordCloudData.length,
+      completedAt: new Date().toISOString(),
+      stories: userProgress.map(p => ({
+        title: p.story_title,
+        completed: p.completed,
+        timeSpent: p.time_spent,
+        vocabulary: p.vocabulary
+      }))
+    };
+    
+    return report;
+  };
+
+  const exportProgressReport = () => {
+    const report = generateProgressReport();
+    const csv = Papa.unparse([report]);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `storybridge-progress-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Progress Report Exported",
+      description: "Your learning progress has been saved to CSV",
+    });
+  };
+
+  const shareProgressWithTeacher = async () => {
+    const report = generateProgressReport();
+    const shareText = `StoryBridge Progress Report:
+    Stories Completed: ${report.totalStories}
+    Coins Earned: ${report.totalCoins}
+    Vocabulary Words: ${report.vocabularyLearned}
+    Badges: ${report.badges.join(', ')}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'StoryBridge Progress Report',
+          text: shareText
+        });
+      } catch (error) {
+        // Fallback to clipboard
+        navigator.clipboard.writeText(shareText);
+        toast({
+          title: "Copied to Clipboard",
+          description: "Progress report copied - share with your teacher!",
+        });
+      }
+    } else {
+      navigator.clipboard.writeText(shareText);
+      toast({
+        title: "Copied to Clipboard", 
+        description: "Progress report copied - share with your teacher!",
+      });
+    }
+  };
+
+  useEffect(() => {
+    const cloudData = generateWordCloudData();
+    setWordCloudData(cloudData);
+  }, [userProgress]);
 
   const fetchStories = async () => {
     try {
