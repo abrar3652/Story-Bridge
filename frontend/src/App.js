@@ -856,10 +856,15 @@ const StoryPlayer = ({ story, onComplete }) => {
   useEffect(() => {
     loadAudio();
     calculateTRPSCheckpoints();
+    setupVoiceCommands();
+    setupWordTimestamps();
     
     return () => {
       if (sound) {
         sound.unload();
+      }
+      if (recognition) {
+        recognition.stop();
       }
     };
   }, [story]);
