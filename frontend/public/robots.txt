@@ -1,0 +1,22 @@
+# StoryBridge - TPRS Educational Stories PWA
+# Mobile-first, offline-capable platform for children aged 4-10
+
+User-agent: *
+Allow: /
+
+# Allow crawling of main pages
+Allow: /login
+Allow: /signup  
+Allow: /about
+Allow: /contact
+
+# Disallow user-specific content
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /admin
+Disallow: /creator
+Disallow: /narrator
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://story-quest-3.preview.emergentagent.com/sitemap.xml
