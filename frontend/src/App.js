@@ -1955,7 +1955,27 @@ const EndUserDashboard = () => {
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 >
-                  <Card className="cursor-pointer hover:shadow-lg transition-all duration-300">
+                  <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 relative">
+                    {/* FR-3: Progress Ribbons */}
+                    {progress && (
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-3 py-1 rounded-full shadow-lg transform rotate-12">
+                          {progress.vocabulary_learned 
+                            ? `${progress.vocabulary_learned.filter(v => v.learned).length}/${story.vocabulary.length} words`
+                            : '0/0 words'
+                          }
+                        </div>
+                      </div>
+                    )}
+                    
+                    {downloadedStories.has(story.id) && (
+                      <div className="absolute -top-2 -left-2 z-10">
+                        <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow-lg">
+                          📱 Offline
+                        </div>
+                      </div>
+                    )}
+                    
                     <CardContent className="p-6" onClick={() => setSelectedStory(story)}>
                       <div className="text-center">
                         <motion.div
