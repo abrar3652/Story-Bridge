@@ -2015,6 +2015,41 @@ const EndUserDashboard = () => {
           </motion.div>
         )}
       </div>
+      
+      {/* FR-2: Badge Popup Dialog */}
+      <Dialog open={showBadgePopup} onOpenChange={setShowBadgePopup}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="text-center">
+              <div className="text-6xl mb-4">{currentBadge?.icon}</div>
+              <DialogTitle className="text-2xl font-bold text-orange-600">
+                {currentBadge?.title}
+              </DialogTitle>
+            </div>
+          </DialogHeader>
+          <div className="text-center py-4">
+            <p className="text-lg text-gray-700 mb-4">
+              {currentBadge?.description}
+            </p>
+            {currentBadge?.coins && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <div className="flex items-center justify-center">
+                  <Coins className="w-5 h-5 text-yellow-500 mr-2" />
+                  <span className="text-lg font-semibold text-yellow-700">
+                    +{currentBadge.coins} coins earned!
+                  </span>
+                </div>
+              </div>
+            )}
+            <Button 
+              onClick={() => setShowBadgePopup(false)}
+              className="w-full bg-orange-500 hover:bg-orange-600"
+            >
+              Awesome! Continue Learning
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
