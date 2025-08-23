@@ -1585,6 +1585,8 @@ const EndUserDashboard = () => {
   const [wordCloudData, setWordCloudData] = useState([]);
   const [downloadedStories, setDownloadedStories] = useState(new Set());
   const [currentTab, setCurrentTab] = useState('stories');
+  const [showBadgePopup, setShowBadgePopup] = useState(false);
+  const [currentBadge, setCurrentBadge] = useState(null);
   
   const { user, isOnline, storage } = useAuth();
   const { toast } = useToast();
