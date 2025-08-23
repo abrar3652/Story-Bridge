@@ -5,6 +5,10 @@ import { Howl } from 'howler';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import { useTranslation } from 'react-i18next';
+import WordCloud from 'react-wordcloud';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import Papa from 'papaparse';
+import QRCode from 'qrcode.react';
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, User, Book, Mic, Home, 
   Trophy, Coins, Settings, LogOut, Shield, Users, BarChart3, Check, X,
