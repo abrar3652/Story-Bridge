@@ -1,7 +1,7 @@
 {
-  "name": "StoryBridge - Interactive Educational Stories",
+  "name": "StoryBridge - TPRS Educational Stories PWA",
   "short_name": "StoryBridge",
-  "description": "Interactive audio stories that make learning fun for children aged 4-10",
+  "description": "Mobile-first, offline-capable PWA delivering TPRS-based educational stories for children aged 4-10 in low-connectivity environments",
   "icons": [
     {
       "src": "icon-192x192.png",
@@ -24,5 +24,55 @@
   "scope": "/",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["education", "kids", "stories"]
+  "categories": ["education", "kids", "stories", "tprs", "offline-learning"],
+  "prefer_related_applications": false,
+  "display_override": ["window-controls-overlay", "standalone", "fullscreen"],
+  "edge_side_panel": {
+    "preferred_width": 320
+  },
+  "shortcuts": [
+    {
+      "name": "Stories Library",
+      "short_name": "Stories",
+      "description": "Browse available educational stories",
+      "url": "/stories",
+      "icons": [
+        {
+          "src": "icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My Progress",
+      "short_name": "Progress",
+      "description": "View learning progress and achievements",
+      "url": "/progress",
+      "icons": [
+        {
+          "src": "icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Offline Mode",
+      "short_name": "Offline",
+      "description": "Access downloaded stories offline",
+      "url": "/offline",
+      "icons": [
+        {
+          "src": "icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "protocol_handlers": [
+    {
+      "protocol": "web+storybridge",
+      "url": "/share?url=%s"
+    }
+  ]
 }
