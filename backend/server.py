@@ -214,8 +214,8 @@ async def get_admin_user(current_user: User = Depends(get_current_user)):
     return current_user
 
 # TPRS Validation
-def validate_tprs_compliance(text: str, vocabulary: List[str]) -> Dict[str, Any]:
-    """Validate TPRS compliance: 80% known vocab, 7+ repetitions"""
+def validate_tprs_compliance(text: str, vocabulary: List[str], min_repetitions: int = 3) -> Dict[str, Any]:
+    """Validate TPRS compliance: 80% known vocab, 3+ repetitions (configurable)"""
     words = re.findall(r'\w+', text.lower())
     total_words = len(words)
     
@@ -227,12 +227,12 @@ def validate_tprs_compliance(text: str, vocabulary: List[str]) -> Dict[str, Any]
     for word in vocabulary:
         vocab_counts[word.lower()] = words.count(word.lower())
     
-    # Check if new vocab words appear 7+ times
-    insufficient_reps = [word for word, count in vocab_counts.items() if count < 7]
+    # Check if new vocab words appear min_repetitions+ times
+    insufficient_reps = [word for word, count in vocab_counts.items() if count < min_repetitions]
     if insufficient_reps:
         return {
             "valid": False, 
-            "reason": f"Vocabulary words need 7+ repetitions: {insufficient_reps}"
+            "reason": f"Vocabulary words need {min_repetitions}+ repetitions: {insufficient_reps}"
         }
     
     # For now, assume 80% known vocabulary (would need dictionary lookup in production)
