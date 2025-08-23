@@ -2135,14 +2135,27 @@ const CreatorDashboard = () => {
                         onClick={() => handleEdit(story)}
                         disabled={story.status === 'published'}
                       >
+                        <Edit className="w-3 h-3 mr-1" />
                         {t('action.edit')}
                       </Button>
+                      {story.status === 'draft' && (
+                        <Button 
+                          variant="secondary" 
+                          size="sm"
+                          onClick={() => handleSubmitToPending(story.id)}
+                          disabled={!isOnline}
+                        >
+                          <Send className="w-3 h-3 mr-1" />
+                          Submit
+                        </Button>
+                      )}
                       <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => handleDelete(story.id)}
-                        disabled={story.status !== 'draft'}
+                        disabled={!['draft', 'rejected'].includes(story.status)}
                       >
+                        <Trash2 className="w-3 h-3 mr-1" />
                         {t('action.delete')}
                       </Button>
                     </div>
