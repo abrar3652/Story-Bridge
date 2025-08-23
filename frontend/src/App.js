@@ -3917,6 +3917,80 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : <Navigate to="/auth" replace />;
 };
 
+// Google OAuth Callback Component
+const GoogleOAuthCallback = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    const handleGoogleCallback = async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        
+        if (error) {
+          throw new Error(`OAuth error: ${error}`);
+        }
+        
+        if (!code) {
+          throw new Error('No authorization code received');
+        }
+        
+        // Send code to backend
+        const response = await axios.post(`${API}/auth/google`, {
+          code,
+          redirect_uri: `${window.location.origin}/auth/google/callback`
+        });
+        
+        const { access_token, user } = response.data;
+        
+        // Store token and user data
+        localStorage.setItem('token', access_token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+        
+        // Store in offline storage
+        await offlineStorage.saveUserData(user, access_token);
+        
+        toast({
+          title: "Welcome to StoryBridge!",
+          description: "Successfully signed in with Google",
+        });
+        
+        // Redirect to dashboard
+        navigate('/dashboard');
+        
+      } catch (error) {
+        console.error('Google OAuth error:', error);
+        toast({
+          title: "Sign-in Failed",
+          description: error.response?.data?.detail || error.message || "Failed to sign in with Google",
+          variant: "destructive",
+        });
+        
+        // Redirect back to auth page
+        navigate('/auth');
+      }
+    };
+    
+    handleGoogleCallback();
+  }, [navigate, toast]);
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            <h2 className="text-lg font-semibold mb-2">Completing Sign-in</h2>
+            <p className="text-gray-600">Please wait while we process your Google sign-in...</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 // PWA Install Prompt Component
 const PWAInstallPrompt = () => {
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
