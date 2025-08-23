@@ -961,8 +961,26 @@ const StoryPlayer = ({ story, onComplete }) => {
         if (tprsCheckpoints.length > 0) {
           monitorTRPSCheckpoints();
         }
+        
+        // FR-2: Start word highlighting monitoring
+        startWordHighlighting();
       }
     }
+  };
+
+  const startWordHighlighting = () => {
+    const highlightInterval = setInterval(() => {
+      if (!isPlaying || !sound) {
+        clearInterval(highlightInterval);
+        return;
+      }
+      
+      const currentPos = sound.seek() || 0;
+      setCurrentTime(currentPos);
+      
+      // Update word highlighting
+      updateWordHighlight(currentPos);
+    }, 100);
   };
 
   const monitorTRPSCheckpoints = () => {
