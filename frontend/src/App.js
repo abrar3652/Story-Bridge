@@ -2335,7 +2335,23 @@ const NarratorDashboard = () => {
   };
 
   const handleSubmitNarration = async () => {
-    if (!selectedStory) return;
+    if (!selectedStory) {
+      toast({
+        title: "No story selected",
+        description: "Please select a story to narrate",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!audioFile && !voiceText) {
+      toast({
+        title: "No content provided",
+        description: "Please provide either audio or text for the narration",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (!isOnline) {
       toast({
@@ -2357,23 +2373,33 @@ const NarratorDashboard = () => {
         formData.append('text', voiceText);
       }
       
-      await axios.post(`${API}/narrations`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      if (editingNarration) {
+        // Update existing narration
+        await axios.put(`${API}/narrations/${editingNarration.id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        
+        toast({
+          title: "Narration updated!",
+          description: "Your narration has been updated successfully.",
+        });
+      } else {
+        // Create new narration
+        await axios.post(`${API}/narrations`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        
+        toast({
+          title: "Narration submitted!",
+          description: t('message.narration_submitted'),
+        });
+      }
       
-      toast({
-        title: "Narration submitted!",
-        description: t('message.narration_submitted'),
-      });
-      
-      // Reset form
-      setSelectedStory(null);
-      setAudioFile(null);
-      setVoiceText('');
-      setRecordedBlobs([]);
-      
+      resetForm();
       fetchNarrations();
     } catch (error) {
       toast({
