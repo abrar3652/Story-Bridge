@@ -1,70 +1,84 @@
-# Getting Started with Create React App
+# StoryBridge Frontend - TPRS Educational Stories PWA
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the frontend for StoryBridge, a mobile-first, offline-capable Progressive Web App delivering TPRS-based educational stories for children aged 4–10 in low-connectivity environments.
+
+## 🚀 Quick Start
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app) and enhanced with PWA capabilities.
+
+## 📱 Mobile-First Architecture
+
+The frontend is optimized for mobile devices with:
+- Touch-friendly interface design
+- Responsive layout for all screen sizes  
+- Offline-first architecture with IndexedDB
+- Service Worker for caching and background sync
+- PWA installation capabilities
+
+## 🎭 Role-Based Interface
+
+StoryBridge supports four distinct user roles:
+- **End Users (Children 4-10)**: Simplified, audio-guided interface
+- **Creators**: Story creation and management tools
+- **Narrators**: Audio recording and editing capabilities  
+- **Administrators**: Platform management and analytics dashboards
 
 ## Available Scripts
 
 In the project directory, you can run:
 
-### `npm start`
+### `yarn start`
 
-Runs the app in the development mode.\
+Runs the app in development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
+### `yarn build`
 
 Builds the app for production to the `build` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The build is minified and includes PWA features for offline functionality.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### `yarn test`
 
-### `npm run eject`
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 🔧 Key Technologies
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **React 19**: Latest React with enhanced performance
+- **Tailwind CSS**: Utility-first CSS framework for responsive design
+- **Radix UI**: Accessible component primitives
+- **Framer Motion**: Smooth animations and transitions
+- **i18next**: Internationalization with Arabic/RTL support
+- **IndexedDB**: Local storage for offline functionality
+- **Service Worker**: Background sync and caching
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 📦 PWA Features
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **Service Worker**: Advanced caching strategies for offline use
+- **Web App Manifest**: Native app-like installation
+- **Background Sync**: Automatic data synchronization
+- **Push Notifications**: Educational engagement reminders
+- **Offline Indicators**: Clear connection status
 
-## Learn More
+## 🌐 TPRS Integration
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The interface implements TPRS methodology with:
+- **Comprehension Checkpoints**: Embedded quiz validation
+- **Vocabulary Reinforcement**: Context-based word learning
+- **Progress Tracking**: Detailed learning analytics
+- **Audio-Text Sync**: Synchronized narration highlighting
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔄 Offline Functionality
 
-### Code Splitting
+Complete offline support including:
+- **Story Caching**: Download stories for offline reading
+- **Progress Sync**: Local progress tracking with cloud sync
+- **Queued Actions**: Background synchronization when online
+- **Data Management**: Efficient local storage optimization
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Learn more about PWA development: [PWA Documentation](https://web.dev/progressive-web-apps/)
