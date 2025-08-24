@@ -438,17 +438,67 @@ async def admin_login(user: UserLogin):
 
 # Story routes
 @api_router.post("/stories", response_model=Story)
-async def create_story(story: StoryCreate, current_user: User = Depends(get_current_user)):
+async def create_story(
+    title: str = Form(...),
+    text: str = Form(...),
+    language: str = Form(...),
+    age_group: str = Form(...),
+    vocabulary: str = Form(...),  # JSON string
+    quizzes: str = Form(...),     # JSON string
+    images: List[UploadFile] = File(None),
+    current_user: User = Depends(get_current_user)
+):
     if current_user.role not in ["creator", "admin"]:
         raise HTTPException(status_code=403, detail="Only creators can create stories")
     
+    # Parse JSON fields
+    try:
+        vocabulary_list = json.loads(vocabulary) if vocabulary else []
+        quizzes_list = json.loads(quizzes) if quizzes else []
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON in vocabulary or quizzes field")
+    
     # Validate TPRS compliance
-    tprs_validation = validate_tprs_compliance(story.text, story.vocabulary)
+    tprs_validation = validate_tprs_compliance(text, vocabulary_list)
     if not tprs_validation["valid"]:
         raise HTTPException(status_code=400, detail=f"TPRS validation failed: {tprs_validation['reason']}")
     
-    story_dict = story.dict()
-    story_obj = Story(**story_dict, creator_id=current_user.id)
+    # Handle SVG image uploads
+    image_ids = []
+    if images:
+        if len(images) > 5:
+            raise HTTPException(status_code=400, detail="Maximum 5 images allowed")
+        
+        for image in images:
+            if not image.content_type.startswith('image/svg'):
+                raise HTTPException(status_code=400, detail="Only SVG images are allowed")
+            
+            # Check file size (500KB limit)
+            content = await image.read()
+            if len(content) > 500 * 1024:
+                raise HTTPException(status_code=400, detail="Image size must be less than 500KB")
+            
+            # Upload to GridFS
+            image_id = await fs.upload_from_stream(
+                f"story_image_{uuid.uuid4()}.svg",
+                io.BytesIO(content),
+                metadata={"content_type": image.content_type, "creator_id": current_user.id}
+            )
+            image_ids.append(str(image_id))
+    
+    # Create story object
+    story_data = {
+        "title": title,
+        "text": text,
+        "language": language,
+        "age_group": age_group,
+        "vocabulary": vocabulary_list,
+        "quizzes": quizzes_list,
+        "images": image_ids,
+        "creator_id": current_user.id
+    }
+    
+    story_obj = Story(**story_data)
     await db.stories.insert_one(story_obj.dict())
     
     return story_obj
