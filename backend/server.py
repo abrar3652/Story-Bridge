@@ -626,23 +626,23 @@ async def get_audio(audio_id: str):
     except Exception as e:
         raise HTTPException(status_code=404, detail="Audio not found")
 
-# Audio file serving
-@api_router.get("/audio/{audio_id}")
-async def get_audio(audio_id: str):
+# SVG image serving
+@api_router.get("/images/{image_id}")
+async def get_image(image_id: str):
     try:
         # Convert string ID back to ObjectId for GridFS
         from bson import ObjectId
-        grid_out = await fs.open_download_stream(ObjectId(audio_id))
+        grid_out = await fs.open_download_stream(ObjectId(image_id))
         
-        audio_data = await grid_out.read()
+        image_data = await grid_out.read()
         
         return Response(
-            content=audio_data,
-            media_type="audio/mpeg",
-            headers={"Content-Disposition": f"inline; filename=audio_{audio_id}.mp3"}
+            content=image_data,
+            media_type="image/svg+xml",
+            headers={"Content-Disposition": f"inline; filename=image_{image_id}.svg"}
         )
     except Exception as e:
-        raise HTTPException(status_code=404, detail="Audio not found")
+        raise HTTPException(status_code=404, detail="Image not found")
 
 # Narration routes
 @api_router.post("/narrations")
