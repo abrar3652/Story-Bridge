@@ -2224,9 +2224,7 @@ const CreatorDashboard = () => {
 
   const handleSubmitToPending = async (storyId) => {
     try {
-      await axios.patch(`${API}/stories/${storyId}/status`, null, {
-        params: { status: 'pending' }
-      });
+      await axios.patch(`${API}/stories/${storyId}/submit`);
       
       toast({
         title: "Story submitted!",
