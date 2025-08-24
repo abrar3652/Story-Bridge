@@ -608,6 +608,29 @@ async def update_story_status(story_id: str, status: str, notes: Optional[str] =
     
     return {"message": f"Story status updated to {status}"}
 
+@api_router.patch("/stories/{story_id}/submit")
+async def submit_story_for_review(story_id: str, current_user: User = Depends(get_current_user)):
+    """Allow creators to submit their draft stories for review"""
+    story = await db.stories.find_one({"id": story_id})
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+    
+    # Check permissions
+    if current_user.role != "admin" and story["creator_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Can only submit your own stories")
+    
+    # Only allow submission if draft
+    if story["status"] != "draft":
+        raise HTTPException(status_code=400, detail="Can only submit draft stories")
+    
+    # Update status to pending
+    await db.stories.update_one(
+        {"id": story_id}, 
+        {"$set": {"status": "pending", "updated_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"message": "Story submitted for review"}
+
 # Audio file serving
 @api_router.get("/audio/{audio_id}")
 async def get_audio(audio_id: str):
