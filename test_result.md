@@ -161,65 +161,77 @@ backend:
         comment: "Need to implement SVG file upload support for story creation"
 
 frontend:
-  - task: "PWA Manifest Configuration"
+  - task: "Remove Google OAuth Frontend"
     implemented: true
     working: true
-    file: "/app/frontend/public/manifest.json"
+    file: "/app/frontend/src/App.js, /app/frontend/.env"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "Enhanced manifest.json with TPRS focus, PWA shortcuts, and low-connectivity optimization details"
-
-  - task: "HTML Meta Tags & SEO Setup"
+        comment: "Successfully removed Google OAuth button, callback component, and route from frontend"
+        
+  - task: "Authentication UI Fix"
     implemented: true
     working: true
-    file: "/app/frontend/public/index.html"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Updated meta descriptions, keywords, and titles to reflect TPRS methodology and mobile-first approach"
+        comment: "Authentication forms should now work without Google OAuth, needs testing"
 
-  - task: "Package Configuration"
-    implemented: true
-    working: true
-    file: "/app/frontend/package.json"
+  - task: "SVG Upload UI for Story Creation"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
+    priority: "high"
+    needs_retesting: true
     status_history:
-      - working: true
+      - working: "NA"
         agent: "main"
-        comment: "Updated package.json with proper project name, version, and description reflecting TPRS PWA nature"
-
-  - task: "Frontend Documentation"
-    implemented: true
-    working: true
-    file: "/app/frontend/README.md"
+        comment: "Need to add file input for SVG uploads with validation (<500KB, max 5 files)"
+        
+  - task: "Draft Submission Button"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
+    priority: "high"
+    needs_retesting: true
     status_history:
-      - working: true
+      - working: "NA"
         agent: "main"
-        comment: "Comprehensive frontend README with role-based architecture, PWA features, and TPRS integration details"
-
-  - task: "SEO Configuration"
-    implemented: true
-    working: true
-    file: "/app/frontend/public/robots.txt, /app/frontend/public/sitemap.xml"
+        comment: "Need to add draft submission functionality to change story status to pending"
+        
+  - task: "Progress Tracking UI with Word Cloud"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
-    priority: "low"
-    needs_retesting: false
+    priority: "high"
+    needs_retesting: true
     status_history:
-      - working: true
+      - working: "NA"
         agent: "main"
-        comment: "Created robots.txt and sitemap.xml for improved SEO and search engine discoverability"
+        comment: "Need to implement dedicated progress tracking page with word cloud and completion circles"
+        
+  - task: "Mobile Navigation Improvements"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to fix intersecting icons and improve mobile navigation with sidebar"
 
 metadata:
   created_by: "main_agent"
