@@ -19,4 +19,4 @@ Disallow: /narrator
 Disallow: /api/
 
 # Sitemap location
-Sitemap: https://story-quest-3.preview.emergentagent.com/sitemap.xml
+Sitemap: https://storybridge-app.preview.emergentagent.com/sitemap.xml
