@@ -574,46 +574,6 @@ const AuthPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const handleGoogleLogin = async () => {
-    if (!isOnline) {
-      toast({
-        title: "Connection Required",
-        description: "Google OAuth requires an internet connection",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      // Create Google OAuth URL
-      const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-      const redirectUri = `${window.location.origin}/auth/google/callback`;
-      const scope = 'email profile';
-      const responseType = 'code';
-      
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${googleClientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent(scope)}&` +
-        `response_type=${responseType}&` +
-        `access_type=offline&` +
-        `prompt=consent`;
-      
-      // Redirect to Google OAuth
-      window.location.href = googleAuthUrl;
-      
-    } catch (error) {
-      toast({
-        title: "OAuth Error",
-        description: "Failed to initiate Google OAuth",
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
