@@ -112,17 +112,17 @@ user_problem_statement: |
   landing page. Ensure all interfaces run without errors and complete remaining 70-80% of features.
 
 backend:
-  - task: "Project Documentation Setup"
+  - task: "Remove Google OAuth and Fix Authentication"
     implemented: true
     working: true
-    file: "/app/README.md"
+    file: "/app/backend/server.py, /app/backend/requirements.txt"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "Updated main README.md with comprehensive project overview, objectives, and target user roles"
+        comment: "Successfully removed Google OAuth imports and dependencies, fixed backend authentication, tested login/signup endpoints working"
 
   - task: "Database Configuration Update"
     implemented: true
@@ -134,7 +134,31 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Updated database name to reflect TPRS focus: storybridge_tprs_db"
+        comment: "Updated database name to reflect TPRS focus: storybridge_db, connection working, mock stories created"
+  
+  - task: "TPRS Validation Update (3+ repetitions)"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to update TPRS validation from 7+ to 3+ repetitions as per final-v-prompt"
+  
+  - task: "SVG Upload Support"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to implement SVG file upload support for story creation"
 
 frontend:
   - task: "PWA Manifest Configuration"
