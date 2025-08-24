@@ -20,8 +20,6 @@ import re
 from pathlib import Path
 import requests
 import json
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
