@@ -2170,8 +2170,8 @@ const CreatorDashboard = () => {
       formPayload.append('quizzes', formData.quizzes || '[]');
       
       // Upload images
-      uploadedImages.forEach((img, index) => {
-        formPayload.append(`image_${index}`, img.file);
+      uploadedImages.forEach((img) => {
+        formPayload.append('images', img.file);
       });
       
       // Set status
