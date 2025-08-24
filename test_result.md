@@ -103,12 +103,13 @@
 #====================================================================================================
 
 user_problem_statement: |
-  Complete the initial setup for StoryBridge by updating the project overview, objectives, 
-  and target users sections in the codebase and documentation. Focus solely on revising 
-  README.md and any config files (e.g., .env, manifest.json) to reflect the mobile-first, 
-  offline-capable PWA for TPRS stories, roles (End User, Creator, Narrator, Admin), and 
-  low-connectivity focus. Emphasize mobile navigation fixes in context. Do not implement 
-  any code features; only update descriptive text and configs.
+  Complete the StoryBridge PWA by fixing authentication issues and implementing all remaining 
+  features from the final-v-prompt. Key fixes needed: 1) Remove Google OAuth completely 
+  (DONE), 2) Fix authentication and database connectivity (DONE), 3) Implement missing features 
+  like SVG uploads, draft submission, narration editing, offline downloads, progress tracking 
+  UI, analytics fixes, mobile navigation improvements, TPRS validation (3+ repetitions), 
+  haptics, voice commands, word cloud, P2P sharing, and comprehensive "How to Use" guides on 
+  landing page. Ensure all interfaces run without errors and complete remaining 70-80% of features.
 
 backend:
   - task: "Project Documentation Setup"
