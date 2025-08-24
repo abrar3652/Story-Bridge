@@ -152,11 +152,6 @@ class ContentReview(BaseModel):
     notes: Optional[str] = None
     reviewed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-# Google OAuth Models
-class GoogleOAuthRequest(BaseModel):
-    code: str
-    redirect_uri: str
-
 class MFASetupRequest(BaseModel):
     password: str
 
