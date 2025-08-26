@@ -372,15 +372,18 @@ test_plan:
 
   - task: "Frontend Audio Playback Compatibility Issue"
     implemented: true
-    working: false
-    file: "/app/frontend/src/App.js"
+    working: "NA"
+    file: "/app/frontend/src/App.js, /app/backend/server.py"
     stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
         comment: "AUDIO PLAYBACK ISSUE IDENTIFIED: Frontend testing revealed that while story library, authentication, and story player navigation work perfectly, audio playback fails due to compatibility issues. FINDINGS: ✅ Story library displays 5 published stories correctly, ✅ 3 stories have audio_id fields, ✅ Story player loads correctly with 'Audio Available' badge, ✅ Audio element creation successful with URL /api/audio/68ade9a14b8ebd04ba8dffa6, ✅ Backend serves audio with 200 OK status, ❌ HTML5 audio element fails to load audio file with error event. ROOT CAUSE: Audio file format or encoding stored in backend is not compatible with HTML5 audio element. Backend audio serving works but frontend cannot decode/play the audio format. SOLUTION NEEDED: Either convert audio files to web-compatible format (MP3, WAV, OGG) or add audio format detection/conversion in backend."
+      - working: "NA"
+        agent: "main"
+        comment: "AUDIO FORMAT FIXES IMPLEMENTED: Fixed multiple audio compatibility issues: 1) BACKEND: Updated /audio/{audio_id} endpoint to serve original content-type from GridFS metadata instead of hardcoded 'audio/mpeg', added proper headers including Accept-Ranges and Cache-Control, 2) FRONTEND: Fixed MediaRecorder implementation to use browser-supported MIME types (audio/webm;codecs=opus, audio/mp4, audio/ogg;codecs=opus) instead of hardcoded 'audio/mp3' which doesn't work, added MIME type detection and dynamic blob creation, 3) Added comprehensive logging to debug audio creation and playback. These changes address the root cause of audio incompatibility between recorded/uploaded audio and HTML5 audio element playback."
 
 agent_communication:
   - agent: "main"
