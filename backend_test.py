@@ -833,6 +833,24 @@ def main():
         if not tester.test_auth_login(user_data['email'], user_data['password'], user_type):
             print(f"❌ Login failed for {user_type}")
     
+    # Test admin functionality
+    print("\n👑 Testing Admin Features...")
+    
+    # Create initial admin if needed
+    tester.test_create_initial_admin()  # This might fail if admin exists, that's OK
+    
+    # Login as admin
+    if not tester.test_admin_login():
+        print("❌ Admin login failed")
+    else:
+        # Test admin pending content endpoint
+        if not tester.test_admin_pending_content():
+            print("❌ Getting pending content failed")
+        
+        # Test complete admin workflow
+        if not tester.test_complete_admin_workflow():
+            print("❌ Complete admin workflow failed")
+    
     # Print final results
     print("\n" + "=" * 60)
     print(f"📊 Final Results: {tester.tests_passed}/{tester.tests_run} tests passed")
