@@ -427,7 +427,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'en', // default language
+    lng: localStorage.getItem('i18nextLng') || 'en', // Get from localStorage or default to English
     fallbackLng: 'en',
     
     interpolation: {
@@ -437,6 +437,10 @@ i18n
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage']
+    },
+    
+    react: {
+      useSuspense: false
     }
   });
 
