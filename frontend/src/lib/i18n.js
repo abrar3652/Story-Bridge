@@ -97,9 +97,26 @@ const resources = {
       "auth.sign_in": "Sign In",
       "auth.sign_up": "Create Account",
       "auth.create_account": "Create Account",
-      "auth.no_account": "Don't have an account?",
-      "auth.have_account": "Already have an account?",
+      "auth.no_account": "Don't have an account? Sign up",
+      "auth.have_account": "Already have an account? Sign in",
       "auth.please_wait": "Please wait...",
+      "auth.select_role": "Select your role",
+      "auth.auth_code": "Authentication Code",
+      "auth.enter_6digit": "Enter 6-digit code",
+      "auth.verify_code": "Verify Code",
+      "auth.mfa_required": "MFA Required",
+      "auth.enter_code": "Please enter your authentication code",
+      "auth.signin_success": "Successfully signed in. Redirecting...",
+      "auth.account_created": "Account Created!",
+      "auth.welcome_message": "Welcome to StoryBridge! Redirecting...",
+      "auth.signin_failed": "Sign In Failed",
+      "auth.signup_failed": "Sign Up Failed",
+      
+      // Status and Errors
+      "status.offline": "Offline Mode",
+      "error.connection_required": "Connection Required", 
+      "error.need_internet": "You need an internet connection to create an account",
+      "error.general": "Something went wrong. Please try again.",
       
       // Dashboard
       "dashboard.story_library": "Story Library",
