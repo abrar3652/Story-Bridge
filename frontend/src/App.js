@@ -905,21 +905,27 @@ const StoryPlayer = ({ story, onComplete }) => {
 
   // Initialize audio element when component mounts
   useEffect(() => {
+    console.log('StoryPlayer initialized with story:', story);
+    console.log('Story has audio_id:', story.audio_id);
+    
     if (story.audio_id) {
-      const audio = new Audio(`${API}/audio/${story.audio_id}`);
+      const audioUrl = `${API}/audio/${story.audio_id}`;
+      console.log('Creating audio element with URL:', audioUrl);
+      const audio = new Audio(audioUrl);
       
       // Audio event handlers
       audio.addEventListener('loadstart', () => {
-        console.log('Audio loading started');
+        console.log('Audio loading started for:', audioUrl);
       });
       
       audio.addEventListener('canplay', () => {
-        console.log('Audio can start playing');
+        console.log('Audio can start playing:', audioUrl);
         setAudioError(false);
       });
       
       audio.addEventListener('error', (e) => {
         console.error('Audio loading error:', e);
+        console.error('Failed audio URL:', audioUrl);
         setAudioError(true);
         setIsPlaying(false);
         toast({
@@ -930,14 +936,17 @@ const StoryPlayer = ({ story, onComplete }) => {
       });
       
       audio.addEventListener('ended', () => {
+        console.log('Audio playback ended');
         setIsPlaying(false);
       });
       
       audio.addEventListener('pause', () => {
+        console.log('Audio paused');
         setIsPlaying(false);
       });
       
       audio.addEventListener('play', () => {
+        console.log('Audio playing');
         setIsPlaying(true);
       });
       
@@ -948,6 +957,8 @@ const StoryPlayer = ({ story, onComplete }) => {
         audio.pause();
         audio.src = '';
       };
+    } else {
+      console.log('Story has no audio_id, no audio will be available');
     }
   }, [story.audio_id, API, toast]);
 
