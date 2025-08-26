@@ -675,6 +675,8 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -682,44 +684,69 @@ const Dashboard = () => {
   };
 
   const getDashboardComponent = () => {
-    switch (user?.role) {
-      case 'end_user':
-        return <EndUserDashboard />;
-      case 'creator':
-        return <CreatorDashboard />;
-      case 'narrator':
-        return <NarratorDashboard />;
-      case 'admin':
-        return <AdminDashboard />;
+    switch (currentView) {
+      case 'dashboard':
+        switch (user?.role) {
+          case 'end_user':
+            return <EndUserDashboard />;
+          case 'creator':
+            return <CreatorDashboard />;
+          case 'narrator':
+            return <NarratorDashboard />;
+          case 'admin':
+            return <AdminDashboard />;
+          default:
+            return <div>Unknown role</div>;
+        }
+      case 'profile':
+        return <Profile />;
+      case 'settings':
+        return <Settings />;
+      case 'progress':
+        return user?.role === 'end_user' ? <Progress /> : <div>Access denied</div>;
       default:
-        return <div>Unknown role</div>;
+        return <div>Page not found</div>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <Book className="w-8 h-8 text-orange-500" />
-            <h1 className="text-xl font-semibold">StoryBridge</h1>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600">
-              {user?.email} ({user?.role})
-            </span>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <Sidebar 
+        currentView={currentView} 
+        onViewChange={setCurrentView}
+        isCollapsed={sidebarCollapsed}
+        setIsCollapsed={setSidebarCollapsed}
+      />
 
-      {/* Dashboard Content */}
-      {getDashboardComponent()}
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Navigation */}
+        <nav className="bg-white shadow-sm border-b p-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-xl font-semibold text-gray-800">
+                {currentView.charAt(0).toUpperCase() + currentView.slice(1)}
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-600 text-sm">
+                {user?.email} ({user?.role === 'end_user' ? 'Student' : user?.role})
+              </span>
+              <Button variant="outline" onClick={handleLogout} size="sm">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </nav>
+
+        {/* Dashboard Content */}
+        <div className="flex-1 overflow-auto">
+          {getDashboardComponent()}
+        </div>
+      </div>
     </div>
   );
 };
