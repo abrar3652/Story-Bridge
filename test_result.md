@@ -301,8 +301,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fix Narrator Add Narration Functionality"
-    - "Fix Story Audio Playback"
     - "Language Switching Functionality"
     - "Mobile Responsiveness"
   stuck_tasks: []
