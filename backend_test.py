@@ -41,6 +41,8 @@ class StoryBridgeAPITester:
                     response = requests.post(url, json=data, headers=test_headers)
             elif method == 'PUT':
                 response = requests.put(url, json=data, headers=test_headers)
+            elif method == 'PATCH':
+                response = requests.patch(url, json=data, headers=test_headers)
 
             success = response.status_code == expected_status
             if success:
