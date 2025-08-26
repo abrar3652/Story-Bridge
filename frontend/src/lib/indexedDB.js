@@ -102,17 +102,23 @@ export class OfflineStorage {
 
   // Enhanced user data management with full offline login support
   async saveUserData(user, token) {
+    // Calculate email hash first
+    const emailHash = user.email ? await this.hashString(user.email) : null;
+    
+    // Get role permissions
+    const permissions = await this.getRolePermissions(user.role);
+    
     const userData = {
       user,
       token,
       saved_at: new Date().toISOString(),
       // Add credentials hash for offline verification
-      email_hash: user.email ? await this.hashString(user.email) : null,
+      email_hash: emailHash,
       // Store encrypted login state
       login_state: {
         authenticated: true,
         role: user.role,
-        permissions: this.getRolePermissions(user.role),
+        permissions: permissions,
         last_online: navigator.onLine ? new Date().toISOString() : null
       }
     };
