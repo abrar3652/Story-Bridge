@@ -518,6 +518,202 @@ class StoryBridgeAPITester:
         )
         return success
 
+    def test_create_initial_admin(self):
+        """Test creating initial admin user"""
+        success, response = self.run_test(
+            "Create initial admin user",
+            "POST",
+            "auth/create-initial-admin",
+            200
+        )
+        return success
+
+    def test_admin_login(self):
+        """Test admin login"""
+        success, response = self.run_test(
+            "Admin login",
+            "POST",
+            "auth/admin-login",
+            200,
+            data={"email": "admin@storybridge.com", "password": "admin123"}
+        )
+        if success and 'access_token' in response:
+            self.tokens['admin'] = response['access_token']
+            self.users['admin'] = response['user']
+            return True
+        return False
+
+    def test_admin_pending_content(self):
+        """Test getting pending content for admin approval"""
+        if 'admin' not in self.tokens:
+            print("❌ No admin token available")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens["admin"]}'}
+        success, response = self.run_test(
+            "Get pending content (admin)",
+            "GET",
+            "admin/pending",
+            200,
+            headers=headers
+        )
+        
+        if success:
+            print(f"   📊 Pending Content Analysis:")
+            if 'stories' in response:
+                pending_stories = response['stories']
+                print(f"   📚 Pending Stories: {len(pending_stories)}")
+                for story in pending_stories:
+                    print(f"      - '{story.get('title', 'Unknown')}' (ID: {story.get('id', 'Unknown')})")
+            
+            if 'narrations' in response:
+                pending_narrations = response['narrations']
+                print(f"   🎤 Pending Narrations: {len(pending_narrations)}")
+                for narration in pending_narrations:
+                    story_id = narration.get('story_id', 'Unknown')
+                    narration_id = narration.get('id', 'Unknown')
+                    has_audio = 'Yes' if narration.get('audio_id') else 'No'
+                    print(f"      - Story ID: {story_id}, Narration ID: {narration_id}, Has Audio: {has_audio}")
+                    
+            # Store pending content for further testing
+            self.pending_stories = response.get('stories', [])
+            self.pending_narrations = response.get('narrations', [])
+            
+        return success
+
+    def test_submit_story_for_review(self, user_type="creator"):
+        """Test submitting a story for admin review"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        # First create a story
+        if not self.test_create_story(user_type):
+            print("❌ Failed to create story for submission test")
+            return False
+            
+        # Get creator's stories to find the draft story
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        success, response = self.run_test(
+            f"Get creator stories for submission ({user_type})",
+            "GET",
+            "stories/creator",
+            200,
+            headers=headers
+        )
+        
+        if not success or not response:
+            print("❌ Failed to get creator stories")
+            return False
+            
+        # Find a draft story to submit
+        draft_stories = [story for story in response if story.get('status') == 'draft']
+        if not draft_stories:
+            print("❌ No draft stories found to submit")
+            return False
+            
+        story_id = draft_stories[0]['id']
+        
+        # Submit the story for review
+        success, response = self.run_test(
+            f"Submit story for review ({user_type})",
+            "PATCH",
+            f"stories/{story_id}/submit",
+            200,
+            headers=headers
+        )
+        
+        return success
+
+    def test_approve_story(self, user_type="admin"):
+        """Test approving a pending story"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        if not hasattr(self, 'pending_stories') or not self.pending_stories:
+            print("❌ No pending stories available for approval")
+            return False
+            
+        story_id = self.pending_stories[0]['id']
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        
+        success, response = self.run_test(
+            f"Approve story ({user_type})",
+            "PATCH",
+            f"admin/content/story/{story_id}/approve",
+            200,
+            headers=headers
+        )
+        
+        return success
+
+    def test_approve_narration(self, user_type="admin"):
+        """Test approving a pending narration"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        if not hasattr(self, 'pending_narrations') or not self.pending_narrations:
+            print("❌ No pending narrations available for approval")
+            return False
+            
+        narration_id = self.pending_narrations[0]['id']
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        
+        success, response = self.run_test(
+            f"Approve narration ({user_type})",
+            "PATCH",
+            f"admin/content/narration/{narration_id}/approve",
+            200,
+            headers=headers
+        )
+        
+        return success
+
+    def test_complete_admin_workflow(self):
+        """Test the complete admin workflow: create story → approve → add narration → approve narration"""
+        print("\n🔄 Testing Complete Admin Workflow...")
+        
+        # Step 1: Create and submit a story as creator
+        print("   Step 1: Creating and submitting story...")
+        if not self.test_submit_story_for_review('creator'):
+            print("❌ Failed to create and submit story")
+            return False
+            
+        # Step 2: Get pending content to see the submitted story
+        print("   Step 2: Checking pending content...")
+        if not self.test_admin_pending_content():
+            print("❌ Failed to get pending content")
+            return False
+            
+        # Step 3: Approve the story
+        print("   Step 3: Approving story...")
+        if not self.test_approve_story('admin'):
+            print("❌ Failed to approve story")
+            return False
+            
+        # Step 4: Add narration to the approved story
+        print("   Step 4: Adding narration...")
+        if not self.test_create_narration_with_audio('narrator'):
+            print("❌ Failed to create narration")
+            return False
+            
+        # Step 5: Check pending content again to see the narration
+        print("   Step 5: Checking pending narrations...")
+        if not self.test_admin_pending_content():
+            print("❌ Failed to get pending content after narration")
+            return False
+            
+        # Step 6: Approve the narration
+        print("   Step 6: Approving narration...")
+        if not self.test_approve_narration('admin'):
+            print("❌ Failed to approve narration")
+            return False
+            
+        print("✅ Complete admin workflow test passed!")
+        return True
+
 def main():
     print("🚀 Starting StoryBridge API Testing...")
     print("=" * 60)
