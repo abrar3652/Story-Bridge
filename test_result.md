@@ -310,28 +310,34 @@ test_plan:
   test_priority: "high_first"
 
   - task: "Fix Narrator Add Narration Functionality"
-    implemented: false
-    working: false
+    implemented: true
+    working: "NA"
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: false
         agent: "main"
         comment: "USER REPORTED ISSUE: In narrator dashboard, clicking 'Add Narration' button takes them nowhere. Should open interface for recording audio or uploading MP3 files. Found the issue: Button at line 1419-1421 has no onClick handler."
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Created comprehensive NarrationForm component with audio recording using MediaRecorder API, MP3/audio file upload, text input, validation, and submission to /api/narrations endpoint. Added state management to NarratorDashboard to toggle between dashboard view and narration form. Includes proper error handling, file size validation (5MB), and user feedback via toasts."
         
   - task: "Fix Story Audio Playback"
-    implemented: false
-    working: false
+    implemented: true
+    working: "NA"
     file: "/app/frontend/src/App.js"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: false
         agent: "main"
         comment: "USER REPORTED ISSUE: When pressing play button on story in end user view, there's no actual audio playback. Found the issue: StoryPlayer component play/pause button only toggles state but doesn't play actual audio from /api/audio/{audio_id} endpoint."
+      - working: "NA"
+        agent: "main"
+        comment: "IMPLEMENTED: Added real HTML5 audio playback functionality to StoryPlayer component. Audio element created with proper event handlers for load/error/play/pause states. Play/pause button now controls actual audio playback from /api/audio/{audio_id}. Added visual indicators for audio availability, error handling for missing audio, and proper cleanup on component unmount. Gracefully handles stories without narration."
 
 agent_communication:
   - agent: "main"
