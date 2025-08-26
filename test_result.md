@@ -179,14 +179,17 @@ frontend:
   - task: "Authentication UI Fix"
     implemented: true
     working: true
-    file: "/app/frontend/src/App.js"
+    file: "/app/frontend/src/App.js, /app/frontend/src/lib/indexedDB.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Authentication forms should now work without Google OAuth, needs testing"
+      - working: true
+        agent: "main"
+        comment: "AUTHENTICATION FULLY WORKING: Fixed critical bug in IndexedDB saveUserData method. Issue was async operations (await this.hashString()) inside object literal causing DataCloneError. Refactored to compute async values before object creation. Both login and signup tested and working perfectly with database storybridge_db."
 
   - task: "SVG Upload UI for Story Creation"
     implemented: false
