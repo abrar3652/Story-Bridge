@@ -11,7 +11,7 @@ import Papa from 'papaparse';
 import QRCode from 'qrcode.react';
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, User, Book, Mic, Home, 
-  Trophy, Coins, Settings, LogOut, Shield, Users, BarChart3, Check, X,
+  Trophy, Coins, Settings as SettingsIcon, LogOut, Shield, Users, BarChart3, Check, X,
   Download, Wifi, WifiOff, Globe, Languages, Trash2, RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
