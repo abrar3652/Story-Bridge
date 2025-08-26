@@ -19,4 +19,4 @@ Disallow: /narrator
 Disallow: /api/
 
 # Sitemap location
-Sitemap: https://signin-debugger.preview.emergentagent.com/sitemap.xml
+Sitemap: https://storyquest-edu-1.preview.emergentagent.com/sitemap.xml
