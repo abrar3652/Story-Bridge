@@ -325,9 +325,26 @@ const resources = {
       "auth.sign_in": "تسجيل الدخول",
       "auth.sign_up": "إنشاء حساب",
       "auth.create_account": "إنشاء حساب",
-      "auth.no_account": "ليس لديك حساب؟",
-      "auth.have_account": "لديك حساب بالفعل؟",
+      "auth.no_account": "ليس لديك حساب؟ سجل الآن",
+      "auth.have_account": "لديك حساب بالفعل؟ سجل دخولك",
       "auth.please_wait": "يرجى الانتظار...",
+      "auth.select_role": "اختر دورك",
+      "auth.auth_code": "رمز المصادقة",
+      "auth.enter_6digit": "أدخل الرمز المكون من 6 أرقام",
+      "auth.verify_code": "تحقق من الرمز",
+      "auth.mfa_required": "مطلوب المصادقة الثنائية",
+      "auth.enter_code": "يرجى إدخال رمز المصادقة الخاص بك",
+      "auth.signin_success": "تم تسجيل الدخول بنجاح. جاري التوجيه...",
+      "auth.account_created": "تم إنشاء الحساب!",
+      "auth.welcome_message": "مرحبًا بك في جسر القصص! جاري التوجيه...",
+      "auth.signin_failed": "فشل تسجيل الدخول",
+      "auth.signup_failed": "فشل إنشاء الحساب",
+      
+      // Status and Errors  
+      "status.offline": "وضع بدون اتصال",
+      "error.connection_required": "الاتصال مطلوب",
+      "error.need_internet": "تحتاج إلى اتصال بالإنترنت لإنشاء حساب",
+      "error.general": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
       
       // Dashboard 
       "dashboard.story_library": "مكتبة القصص",
