@@ -309,6 +309,30 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Fix Narrator Add Narration Functionality"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "USER REPORTED ISSUE: In narrator dashboard, clicking 'Add Narration' button takes them nowhere. Should open interface for recording audio or uploading MP3 files. Found the issue: Button at line 1419-1421 has no onClick handler."
+        
+  - task: "Fix Story Audio Playback"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "USER REPORTED ISSUE: When pressing play button on story in end user view, there's no actual audio playback. Found the issue: StoryPlayer component play/pause button only toggles state but doesn't play actual audio from /api/audio/{audio_id} endpoint."
+
 agent_communication:
   - agent: "main"
     message: "INITIAL SETUP COMPLETED: Successfully updated all documentation and configuration files for StoryBridge PWA. Updated README.md with comprehensive project overview emphasizing TPRS methodology, mobile-first design, offline capabilities, and four user roles (End User, Creator, Narrator, Admin). Enhanced manifest.json with PWA shortcuts and low-connectivity optimizations. Updated HTML meta tags for better SEO and mobile optimization. Created robots.txt and sitemap.xml for search engine discoverability. Updated package.json with proper project metadata. Changed database name to reflect TPRS focus. All changes focused solely on descriptive text and configuration - no code features implemented as per task scope."
@@ -316,3 +340,5 @@ agent_communication:
     message: "AUTHENTICATION ISSUES FULLY RESOLVED: The user reported being unable to sign in or sign up with 502 errors. Root cause analysis revealed: 1) Backend service was not starting properly due to port conflicts and supervisor issues, 2) Frontend had a critical bug in offline storage (IndexedDB) causing DataCloneError when saving user data after successful authentication. FIXES APPLIED: 1) Fixed supervisor service startup and port conflicts, 2) Refactored IndexedDB.saveUserData() method to handle async operations properly before object creation, 3) Verified database connectivity to storybridge_db. RESULT: Both login and signup are now working perfectly. Users can successfully authenticate and access the dashboard/story library."
   - agent: "testing"
     message: "AUTHENTICATION TESTING COMPLETED - NO 503 ERRORS FOUND: Conducted comprehensive testing of StoryBridge authentication endpoints as requested. RESULTS: 1) POST /api/auth/signup endpoint working perfectly with proper JSON payloads (email, password, role='end_user'), 2) POST /api/auth/login endpoint functioning correctly with same user credentials, 3) Database connection verified stable through multiple authenticated requests, 4) Service responding correctly with no 503 Service Unavailable errors detected. Tested edge cases, concurrent requests, and load scenarios. All supervisor services running properly. Backend authentication is fully functional and the reported 503 error issue appears to be resolved."
+  - agent: "main"
+    message: "NARRATION FUNCTIONALITY ISSUES IDENTIFIED: User reported two critical issues: 1) Narrator 'Add Narration' button is non-functional - found missing onClick handler in NarratorDashboard component, 2) Story audio playback is broken - StoryPlayer component play/pause buttons only toggle state without actual audio playback. Backend has proper /api/narrations and /api/audio/{audio_id} endpoints. PLAN: Phase 1 - Create NarrationForm component with audio recording/upload capabilities, Phase 2 - Fix StoryPlayer to include HTML5 audio element for real playback, Phase 3 - Test both functionalities thoroughly."
