@@ -12,6 +12,8 @@ class StoryBridgeAPITester:
         self.tokens = {}  # Store tokens for different user types
         self.users = {}   # Store user data
         self.stories = [] # Store created stories
+        self.narrations = [] # Store created narrations
+        self.audio_ids = [] # Store audio IDs for testing
         self.tests_run = 0
         self.tests_passed = 0
 
