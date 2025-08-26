@@ -1523,7 +1523,19 @@ const NarrationForm = ({ story, onSuccess, onCancel }) => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      
+      // Check supported MIME types and use the best one
+      let mimeType = 'audio/webm';
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+        mimeType = 'audio/ogg;codecs=opus';
+      }
+      
+      console.log('Using MIME type for recording:', mimeType);
+      const recorder = new MediaRecorder(stream, { mimeType });
       
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -1532,7 +1544,8 @@ const NarrationForm = ({ story, onSuccess, onCancel }) => {
       };
       
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+        const audioBlob = new Blob(audioChunks, { type: mimeType });
+        console.log('Recording stopped, created audio blob:', audioBlob.type, audioBlob.size);
         setRecordedAudio(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
