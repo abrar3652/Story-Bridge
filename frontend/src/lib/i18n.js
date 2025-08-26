@@ -391,7 +391,7 @@ const resources = {
       "dashboard.admin_dashboard": "لوحة الإدارة",
       "dashboard.manage_content": "راجع وأدر محتوى المنصة",
       
-      // Stories
+      // Stories and Content
       "stories.age_filter": "تصفية حسب العمر",
       "stories.all_ages": "جميع الأعمار",
       "stories.ages_4_6": "من 4-6 سنوات", 
@@ -399,14 +399,49 @@ const resources = {
       "stories.completed": "مكتملة",
       "stories.start_story": "ابدأ القصة",
       "stories.play_again": "العب مرة أخرى",
+      "stories.play": "تشغيل",
       "stories.create_new": "إنشاء قصة جديدة",
       "stories.story_title": "عنوان القصة",
       "stories.age_group": "الفئة العمرية",
       "stories.story_text": "نص القصة",
       "stories.vocabulary": "كلمات المفردات (مفصولة بفواصل)",
+      "stories.vocab_placeholder": "شجاع، يطير، عصفور",
       "stories.quizzes": "أسئلة الاختبار (تنسيق JSON)",
+      "stories.quiz_placeholder": '[{"type": "true_false", "question": "هل كان العصفور شجاعاً؟", "answer": true}]',
       "stories.create_story": "إنشاء قصة",
       "stories.cancel": "إلغاء",
+      "stories.save_draft": "حفظ كمسودة",
+      "stories.submit_review": "إرسال للمراجعة",
+      "stories.svg_images": "صور SVG (الحد الأقصى 5، 500 كيلوبايت لكل صورة)",
+      
+      // Dashboard 
+      "dashboard.story_library": "مكتبة القصص",
+      "dashboard.choose_story": "اختر قصة لبدء مغامرتك!",
+      "dashboard.creator_dashboard": "لوحة منشئ القصص",
+      "dashboard.manage_stories": "أدر قصصك وأنشئ قصصًا جديدة",
+      "dashboard.narrator_dashboard": "لوحة الراوي",
+      "dashboard.add_voice": "أضف صوتك للقصص وأحيها",
+      "dashboard.admin_dashboard": "لوحة الإدارة",
+      "dashboard.manage_content": "راجع وأدر محتوى المنصة",
+      "dashboard.my_stories": "قصصي",
+      
+      // Languages
+      "language.english": "الإنجليزية",
+      "language.arabic": "العربية",
+      
+      // Errors - Extended  
+      "error.fetch_stories": "فشل في تحميل القصص",
+      "error.not_svg": "ليس ملف SVG",
+      "error.exceeds_limit": "يتجاوز حد 500 كيلوبايت",
+      "error.too_many_images": "عدد كبير جداً من الصور",
+      "error.max_5_images": "الحد الأقصى 5 صور مسموح لكل قصة",
+      "error.need_internet_submit": "تحتاج إلى اتصال بالإنترنت لإرسال القصص",
+      "error.create_story_failed": "فشل في إنشاء القصة",
+      "error.submit_failed": "فشل في إرسال القصة",
+      
+      // Messages - Extended
+      "message.story_draft_saved": "تم حفظ قصتك كمسودة.",
+      "message.submitted_for_review": "تم إرسال قصتك للمراجعة الإدارية.",
       
       // Story Player
       "player.new_words": "كلمات جديدة في هذه القصة",
