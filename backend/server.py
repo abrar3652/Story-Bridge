@@ -641,12 +641,20 @@ async def get_audio(audio_id: str):
         
         audio_data = await grid_out.read()
         
+        # Get original content type from metadata
+        content_type = grid_out.metadata.get('content_type', 'audio/mpeg') if grid_out.metadata else 'audio/mpeg'
+        
         return Response(
             content=audio_data,
-            media_type="audio/mpeg",
-            headers={"Content-Disposition": f"inline; filename=audio_{audio_id}.mp3"}
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f"inline; filename=audio_{audio_id}",
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "public, max-age=3600"
+            }
         )
     except Exception as e:
+        print(f"Error serving audio {audio_id}: {e}")
         raise HTTPException(status_code=404, detail="Audio not found")
 
 # SVG image serving
