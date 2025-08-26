@@ -575,13 +575,50 @@ def main():
     if not tester.test_get_user_progress():
         print("❌ Getting user progress failed")
     
-    # Test narrator functionality
-    print("\n🎤 Testing Narrator Features...")
-    if not tester.test_create_narration():
-        print("❌ Narration creation failed")
+    # Test narrator functionality - COMPREHENSIVE NARRATION TESTING
+    print("\n🎤 Testing Narrator Features - Comprehensive Narration Tests...")
     
+    # Test basic narration creation (text only)
+    if not tester.test_create_narration():
+        print("❌ Basic narration creation failed")
+    
+    # Test narration creation with audio file
+    if not tester.test_create_narration_with_audio():
+        print("❌ Narration creation with audio failed")
+    
+    # Test file validation - large file (should fail)
+    if not tester.test_create_narration_large_file():
+        print("❌ Large file validation test failed")
+    
+    # Test file validation - invalid file type (should fail)
+    if not tester.test_create_narration_invalid_file_type():
+        print("❌ Invalid file type validation test failed")
+    
+    # Test permissions - non-narrator role (should fail)
+    if not tester.test_create_narration_non_narrator():
+        print("❌ Non-narrator permission test failed")
+    
+    # Test invalid story ID (should fail)
+    if not tester.test_create_narration_invalid_story():
+        print("❌ Invalid story ID test failed")
+    
+    # Test getting narrator's narrations
     if not tester.test_get_narrator_narrations():
         print("❌ Getting narrator narrations failed")
+    
+    # Test audio file serving
+    print("\n🔊 Testing Audio File Serving...")
+    if not tester.test_get_audio_file():
+        print("❌ Audio file serving failed")
+    
+    # Test invalid audio ID (should fail)
+    if not tester.test_get_audio_file_invalid_id():
+        print("❌ Invalid audio ID test failed")
+    
+    # Test stories with audio information
+    print("\n📚 Testing Stories with Audio Information...")
+    if not tester.test_get_stories_with_audio():
+        print("❌ Getting stories with audio information failed")
     
     # Test login functionality
     print("\n🔐 Testing Login...")
