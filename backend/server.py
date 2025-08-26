@@ -90,7 +90,7 @@ class Story(BaseModel):
     vocabulary: List[str]
     quizzes: List[Dict[str, Any]]
     creator_id: str
-    status: str = "pending"  # draft, pending, published, rejected
+    status: str = "draft"  # draft, pending, published, rejected
     audio_id: Optional[str] = None
     images: List[str] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
