@@ -1799,9 +1799,15 @@ const AdminDashboard = () => {
   const fetchPendingContent = async () => {
     try {
       const response = await axios.get(`${API}/admin/pending`);
+      console.log('Pending content fetched:', response.data);
       setPendingContent(response.data);
     } catch (error) {
       console.error('Error fetching pending content:', error);
+      if (error.response?.status === 403) {
+        console.error('Admin access required');
+      } else if (error.response?.status === 401) {
+        console.error('Authentication required');
+      }
     }
   };
 
