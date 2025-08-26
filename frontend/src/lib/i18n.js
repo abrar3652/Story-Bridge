@@ -128,7 +128,7 @@ const resources = {
       "dashboard.admin_dashboard": "Admin Dashboard",
       "dashboard.manage_content": "Review and manage platform content",
       
-      // Stories
+      // Stories and Content
       "stories.age_filter": "Filter by age",
       "stories.all_ages": "All Ages",
       "stories.ages_4_6": "Ages 4-6",
@@ -136,14 +136,49 @@ const resources = {
       "stories.completed": "Completed",
       "stories.start_story": "Start Story",
       "stories.play_again": "Play Again",
+      "stories.play": "Play",
       "stories.create_new": "Create New Story",
       "stories.story_title": "Story Title",
       "stories.age_group": "Age Group",
       "stories.story_text": "Story Text",
       "stories.vocabulary": "Vocabulary Words (comma-separated)",
+      "stories.vocab_placeholder": "brave, fly, sparrow",
       "stories.quizzes": "Quiz Questions (JSON format)",
+      "stories.quiz_placeholder": '[{"type": "true_false", "question": "The sparrow was brave?", "answer": true}]',
       "stories.create_story": "Create Story",
       "stories.cancel": "Cancel",
+      "stories.save_draft": "Save as Draft",
+      "stories.submit_review": "Submit for Review",
+      "stories.svg_images": "SVG Images (max 5, 500KB each)",
+      
+      // Dashboard
+      "dashboard.story_library": "Story Library",
+      "dashboard.choose_story": "Choose a story to begin your adventure!",
+      "dashboard.creator_dashboard": "Creator Dashboard",
+      "dashboard.manage_stories": "Manage your stories and create new ones",
+      "dashboard.narrator_dashboard": "Narrator Dashboard", 
+      "dashboard.add_voice": "Add your voice to stories and bring them to life",
+      "dashboard.admin_dashboard": "Admin Dashboard",
+      "dashboard.manage_content": "Review and manage platform content",
+      "dashboard.my_stories": "My Stories",
+      
+      // Languages
+      "language.english": "English",
+      "language.arabic": "Arabic",
+      
+      // Errors - Extended
+      "error.fetch_stories": "Failed to load stories",
+      "error.not_svg": "is not an SVG file",
+      "error.exceeds_limit": "exceeds 500KB limit", 
+      "error.too_many_images": "Too many images",
+      "error.max_5_images": "Maximum 5 images allowed per story",
+      "error.need_internet_submit": "You need an internet connection to submit stories",
+      "error.create_story_failed": "Failed to create story",
+      "error.submit_failed": "Failed to submit story",
+      
+      // Messages - Extended
+      "message.story_draft_saved": "Your story has been saved as a draft.",
+      "message.submitted_for_review": "Your story has been submitted for admin review.",
       
       // Story Player
       "player.new_words": "New Words in This Story",
