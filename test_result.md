@@ -343,6 +343,21 @@ test_plan:
         agent: "testing"
         comment: "AUDIO SERVING BACKEND VERIFIED: GET /api/audio/{audio_id} endpoint working perfectly. ✅ Successfully served audio file with ID 68addadcf8fec34bfe909ad1 (200 OK), ✅ Proper HTTP headers and content-type for audio streaming, ✅ 404 error handling for invalid audio IDs working correctly. Backend audio serving infrastructure is fully functional and ready for frontend audio playback integration."
 
+  - task: "Admin Pending Content Management"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "USER REQUESTED TESTING: Test admin functionality specifically the /admin/pending endpoint to understand why pending narrations are not being displayed in AdminDashboard. Expected flow: creator creates story → admin approves it → narrator adds narration → admin approves narration → available to end user."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE ADMIN PENDING TESTING COMPLETED: ✅ /admin/pending endpoint working perfectly (200 OK), ✅ Returns correct data structure with 'stories' and 'narrations' arrays, ✅ Found 3 existing pending narrations in database (mix of audio/text content), ✅ Complete workflow tested successfully: story creation → submission → admin approval → narration creation → admin approval, ✅ Narrations default to 'pending' status correctly, ✅ Admin approval removes narrations from pending queue properly, ✅ Story audio_id field updated after narration approval. CONCLUSION: Backend admin functionality is fully operational. If frontend AdminDashboard not showing pending narrations, issue is in frontend rendering logic, not backend data retrieval."
+
 agent_communication:
   - agent: "main"
     message: "INITIAL SETUP COMPLETED: Successfully updated all documentation and configuration files for StoryBridge PWA. Updated README.md with comprehensive project overview emphasizing TPRS methodology, mobile-first design, offline capabilities, and four user roles (End User, Creator, Narrator, Admin). Enhanced manifest.json with PWA shortcuts and low-connectivity optimizations. Updated HTML meta tags for better SEO and mobile optimization. Created robots.txt and sitemap.xml for search engine discoverability. Updated package.json with proper project metadata. Changed database name to reflect TPRS focus. All changes focused solely on descriptive text and configuration - no code features implemented as per task scope."
