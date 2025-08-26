@@ -806,7 +806,14 @@ const EndUserDashboard = () => {
   const fetchStories = async () => {
     try {
       const response = await axios.get(`${API}/stories`);
-      setStories(response.data);
+      console.log('Raw stories fetched:', response.data);
+      
+      // Filter to only show published stories (extra safety check)
+      const publishedStories = response.data.filter(story => story.status === 'published');
+      console.log('Published stories:', publishedStories);
+      console.log('Stories with audio:', publishedStories.filter(s => s.audio_id));
+      
+      setStories(publishedStories);
     } catch (error) {
       console.error('Error fetching stories:', error);
       toast({
