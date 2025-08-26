@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 class StoryBridgeAPITester:
-    def __init__(self, base_url="https://story-quest-app.preview.emergentagent.com"):
+    def __init__(self, base_url="https://storyquest-edu-2.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tokens = {}  # Store tokens for different user types
