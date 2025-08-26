@@ -963,7 +963,10 @@ const StoryPlayer = ({ story, onComplete }) => {
   }, [story.audio_id, API, toast]);
 
   const handlePlayPause = async () => {
+    console.log('Play/Pause button clicked. Current state:', { isPlaying, audioElement, audioId: story.audio_id });
+    
     if (!story.audio_id) {
+      console.log('No audio_id available for this story');
       toast({
         title: "No Audio Available",
         description: "This story hasn't been narrated yet",
@@ -973,17 +976,21 @@ const StoryPlayer = ({ story, onComplete }) => {
     }
 
     if (!audioElement) {
+      console.log('No audio element available');
       toast({
-        title: "Audio Loading",
-        description: "Please wait for audio to load",
+        title: "Audio Not Ready",
+        description: "Audio is not ready. Please wait and try again.",
+        variant: "destructive"
       });
       return;
     }
 
     try {
       if (isPlaying) {
+        console.log('Pausing audio...');
         audioElement.pause();
       } else {
+        console.log('Playing audio...');
         await audioElement.play();
       }
     } catch (error) {
