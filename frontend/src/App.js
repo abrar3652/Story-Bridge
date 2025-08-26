@@ -302,12 +302,12 @@ const LandingPage = () => {
   ];
   
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 ${direction === 'rtl' ? 'rtl' : ''}`} dir={direction}>
-      <div className="container mx-auto px-4 py-16">
-        {/* Language Switcher */}
-        <div className="absolute top-4 right-4">
+    <div className={`min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 font-arabic ${direction === 'rtl' ? 'rtl' : ''}`} dir={direction}>
+      <div className="container mx-auto px-4 py-8 sm:py-16">
+        {/* Language Switcher - Mobile Responsive */}
+        <div className={`absolute top-4 ${direction === 'rtl' ? 'left-4' : 'right-4'} z-10`}>
           <Select value={currentLang} onValueChange={changeLanguage}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -317,59 +317,60 @@ const LandingPage = () => {
           </Select>
         </div>
 
-        {/* Hero Section */}
+        {/* Hero Section - Mobile Responsive */}
         <motion.div 
-          className="text-center mb-16"
+          className="text-center mb-12 sm:mb-16 pt-12 sm:pt-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Book className="w-24 h-24 mx-auto text-orange-500 mb-6" />
-          <h1 className="text-6xl font-bold text-gray-800 mb-4">StoryBridge</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Mobile-first, offline-capable PWA delivering TPRS-based educational stories 
-            for children aged 4-10 in low-connectivity environments
+          <Book className="w-16 h-16 sm:w-24 sm:h-24 mx-auto text-orange-500 mb-4 sm:mb-6" />
+          <h1 className="text-4xl sm:text-6xl font-bold text-gray-800 mb-3 sm:mb-4">
+            {t('landing.title', 'StoryBridge')}
+          </h1>
+          <p className="text-base sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
+            {t('landing.subtitle', 'Mobile-first, offline-capable PWA delivering TPRS-based educational stories for children aged 4-10 in low-connectivity environments')}
           </p>
           
-          <div className="flex justify-center space-x-4">
+          <div className={`flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4 ${direction === 'rtl' ? 'sm:flex-row-reverse' : ''}`}>
             <Button 
               onClick={() => navigate('/auth')} 
-              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 text-lg"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg w-full sm:w-auto"
             >
-              Get Started
+              {t('landing.get_started', 'Get Started')}
             </Button>
             <Button 
               variant="outline" 
               onClick={() => navigate('/auth')}
-              className="px-8 py-3 text-lg"
+              className="px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg w-full sm:w-auto"
             >
-              Sign In
+              {t('auth.sign_in', 'Sign In')}
             </Button>
           </div>
           
-          <div className="mt-6 flex items-center justify-center space-x-4 text-sm text-gray-600">
+          <div className={`mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 px-4 ${direction === 'rtl' ? 'sm:flex-row-reverse' : ''}`}>
             <div className="flex items-center">
-              <WifiOff className="w-4 h-4 mr-1" />
-              Works 100% Offline
+              <WifiOff className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              {t('landing.offline_badge', 'Works 100% Offline')}
             </div>
             <div className="flex items-center">
-              <Globe className="w-4 h-4 mr-1" />
-              Arabic & English Support
+              <Globe className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              {t('landing.language_support', 'Arabic & English Support')}
             </div>
           </div>
         </motion.div>
 
-        {/* How to Use Section */}
-        <section className="mb-16">
+        {/* How to Use Section - Mobile Responsive with Admin Removed */}
+        <section className="mb-12 sm:mb-16">
           <motion.h2 
-            className="text-3xl font-bold text-center mb-8 text-gray-800"
+            className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-gray-800 px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            How to Use StoryBridge
+            {t('landing.how_to_use', 'How to Use StoryBridge')}
           </motion.h2>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {Object.entries(howToUseGuides).map(([role, guide], index) => (
               <motion.div
                 key={role}
@@ -378,17 +379,17 @@ const LandingPage = () => {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-4 text-orange-600">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className={`flex items-center mb-3 sm:mb-4 text-orange-600 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
                       {guide.icon}
-                      <h3 className="ml-2 font-semibold">{guide.title}</h3>
+                      <h3 className={`${direction === 'rtl' ? 'mr-2' : 'ml-2'} font-semibold text-sm sm:text-base`}>{guide.title}</h3>
                     </div>
                     
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {guide.steps.map((step, stepIndex) => (
-                        <div key={stepIndex} className="flex items-start space-x-2">
-                          <div className="text-orange-500 mt-0.5">{step.icon}</div>
-                          <p className="text-sm text-gray-600 leading-relaxed">{step.text}</p>
+                        <div key={stepIndex} className={`flex items-start gap-2 ${direction === 'rtl' ? 'flex-row-reverse text-right' : ''}`}>
+                          <div className="text-orange-500 mt-0.5 flex-shrink-0">{step.icon}</div>
+                          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{step.text}</p>
                         </div>
                       ))}
                     </div>
