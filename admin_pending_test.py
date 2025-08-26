@@ -111,10 +111,10 @@ class AdminPendingTester:
         headers = {'Authorization': f'Bearer {self.creator_token}'}
         form_data = {
             "title": "Admin Test Story",
-            "text": "This is a test story for admin testing. The test story has test content and test vocabulary. This test story contains test words and test phrases. The test story is designed for test purposes with test data.",
+            "text": "This is a test story for admin testing. The test story has test content and test vocabulary. This test story contains test words and test phrases. The test story is designed for test purposes with test data. Every test in this test story helps test the test system. The test story shows test results and test functionality.",
             "language": "en",
             "age_group": "4-6",
-            "vocabulary": json.dumps(["test", "story", "admin"]),
+            "vocabulary": json.dumps(["test", "story"]),  # Only words that appear 3+ times
             "quizzes": json.dumps([{
                 "type": "true_false",
                 "question": "This is a test story?",
