@@ -28,6 +28,11 @@ import { useToast } from './hooks/use-toast';
 import { Toaster } from './components/ui/toaster';
 import { offlineStorage, useOfflineStorage } from './lib/indexedDB';
 import i18n, { isRTL, getDirection } from './lib/i18n';
+// Import new components
+import Sidebar from './components/Sidebar';
+import Settings from './components/Settings';
+import Profile from './components/Profile';
+import Progress from './components/Progress';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
