@@ -637,16 +637,9 @@ async def get_audio(audio_id: str):
     try:
         # Convert string ID back to ObjectId for GridFS
         from bson import ObjectId
-        logger.info(f"Attempting to fetch audio with ID: {audio_id}")
-        
-        object_id = ObjectId(audio_id)
-        logger.info(f"Converted to ObjectId: {object_id}")
-        
-        grid_out = await fs.open_download_stream(object_id)
-        logger.info(f"GridFS file opened successfully, length: {grid_out.length}")
+        grid_out = await fs.open_download_stream(ObjectId(audio_id))
         
         audio_data = await grid_out.read()
-        logger.info(f"Audio data read, size: {len(audio_data)} bytes")
         
         return Response(
             content=audio_data,
@@ -654,7 +647,6 @@ async def get_audio(audio_id: str):
             headers={"Content-Disposition": f"inline; filename=audio_{audio_id}.mp3"}
         )
     except Exception as e:
-        logger.error(f"Error fetching audio {audio_id}: {e}")
         raise HTTPException(status_code=404, detail="Audio not found")
 
 # SVG image serving
