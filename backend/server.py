@@ -1060,6 +1060,15 @@ async def approve_content(
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail=f"{content_type.title()} not found")
     
+    # If approving a narration, also update the story's audio_id
+    if content_type == "narration":
+        narration = await db.narrations.find_one({"id": content_id})
+        if narration and narration.get("audio_id"):
+            await db.stories.update_one(
+                {"id": narration["story_id"]},
+                {"$set": {"audio_id": narration["audio_id"], "updated_at": datetime.now(timezone.utc)}}
+            )
+    
     # Create review record
     review = ContentReview(
         content_type=content_type,
