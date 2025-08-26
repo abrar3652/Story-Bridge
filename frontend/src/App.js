@@ -494,7 +494,7 @@ const LandingPage = () => {
   );
 };
 
-// Enhanced Auth Page with better error handling
+// Enhanced Auth Page with better error handling and mobile responsiveness
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -506,8 +506,9 @@ const AuthPage = () => {
   
   const { login, signup, isOnline } = useAuth();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const direction = getDirection(i18n.language);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -515,8 +516,8 @@ const AuthPage = () => {
     
     if (!isOnline && !isLogin) {
       toast({
-        title: "Connection Required",
-        description: "You need an internet connection to create an account",
+        title: t('error.connection_required', 'Connection Required'),
+        description: t('error.need_internet', 'You need an internet connection to create an account'),
         variant: "destructive",
       });
       setLoading(false);
@@ -530,22 +531,22 @@ const AuthPage = () => {
         if (result.mfaRequired) {
           setShowMFA(true);
           toast({
-            title: "MFA Required",
-            description: "Please enter your authentication code",
+            title: t('auth.mfa_required', 'MFA Required'),
+            description: t('auth.enter_code', 'Please enter your authentication code'),
           });
           setLoading(false);
           return;
         }
         
         toast({
-          title: "Welcome back!",
-          description: "Successfully signed in. Redirecting...",
+          title: t('auth.welcome_back', 'Welcome back!'),
+          description: t('auth.signin_success', 'Successfully signed in. Redirecting...'),
         });
       } else {
         await signup(email, password, role);
         toast({
-          title: "Account Created!",
-          description: "Welcome to StoryBridge! Redirecting...",
+          title: t('auth.account_created', 'Account Created!'),
+          description: t('auth.welcome_message', 'Welcome to StoryBridge! Redirecting...'),
         });
       }
       
@@ -553,10 +554,10 @@ const AuthPage = () => {
       
     } catch (error) {
       console.error('Auth error:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Something went wrong. Please try again.';
+      const errorMessage = error.response?.data?.detail || error.message || t('error.general', 'Something went wrong. Please try again.');
       
       toast({
-        title: isLogin ? "Sign In Failed" : "Sign Up Failed",
+        title: isLogin ? t('auth.signin_failed', 'Sign In Failed') : t('auth.signup_failed', 'Sign Up Failed'),
         description: errorMessage,
         variant: "destructive",
       });
@@ -566,12 +567,12 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8 font-arabic ${direction === 'rtl' ? 'rtl' : ''}`} dir={direction}>
       {/* Offline Indicator */}
       {!isOnline && (
-        <div className="fixed top-4 left-4 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm flex items-center">
-          <WifiOff className="w-4 h-4 mr-1" />
-          Offline Mode
+        <div className={`fixed top-4 ${direction === 'rtl' ? 'right-4' : 'left-4'} bg-orange-100 text-orange-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center`}>
+          <WifiOff className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          {t('status.offline', 'Offline Mode')}
         </div>
       )}
       
@@ -579,53 +580,62 @@ const AuthPage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
       >
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <Book className="w-12 h-12 mx-auto text-orange-500 mb-2" />
-            <CardTitle className="text-2xl">
-              {isLogin ? "Welcome Back!" : "Join StoryBridge"}
+        <Card className="w-full">
+          <CardHeader className="text-center pb-4 sm:pb-6">
+            <Book className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-orange-500 mb-2" />
+            <CardTitle className="text-xl sm:text-2xl">
+              {isLogin ? t('auth.welcome_back', 'Welcome Back!') : t('auth.join_storybridge', 'Join StoryBridge')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent className="px-4 sm:px-6">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {!showMFA ? (
                 <>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>
+                      {t('auth.email', 'Email')}
+                    </Label>
                     <Input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="mt-1"
+                      className={`mt-1 ${direction === 'rtl' ? 'text-right' : ''}`}
+                      dir={direction}
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>
+                      {t('auth.password', 'Password')}
+                    </Label>
                     <Input
                       id="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="mt-1"
+                      className={`mt-1 ${direction === 'rtl' ? 'text-right' : ''}`}
+                      dir={direction}
                     />
                   </div>
                   
                   {!isLogin && (
                     <div>
-                      <Label htmlFor="role">Role</Label>
+                      <Label htmlFor="role" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>
+                        {t('auth.role', 'Role')}
+                      </Label>
                       <Select value={role} onValueChange={setRole}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select your role" />
+                        <SelectTrigger className={`mt-1 ${direction === 'rtl' ? 'text-right' : ''}`}>
+                          <SelectValue placeholder={t('auth.select_role', 'Select your role')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="end_user">Student/Parent/Teacher</SelectItem>
-                          <SelectItem value="creator">Story Creator</SelectItem>
-                          <SelectItem value="narrator">Voice Narrator</SelectItem>
+                          <SelectItem value="end_user">{t('auth.role.end_user', 'Student/Parent/Teacher')}</SelectItem>
+                          <SelectItem value="creator">{t('auth.role.creator', 'Story Creator')}</SelectItem>
+                          <SelectItem value="narrator">{t('auth.role.narrator', 'Voice Narrator')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -633,22 +643,25 @@ const AuthPage = () => {
                 </>
               ) : (
                 <div>
-                  <Label htmlFor="mfaCode">Authentication Code</Label>
+                  <Label htmlFor="mfaCode" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>
+                    {t('auth.auth_code', 'Authentication Code')}
+                  </Label>
                   <Input
                     id="mfaCode"
                     type="text"
                     value={mfaCode}
                     onChange={(e) => setMfaCode(e.target.value)}
                     required
-                    className="mt-1"
-                    placeholder="Enter 6-digit code"
+                    className={`mt-1 ${direction === 'rtl' ? 'text-right' : ''}`}
+                    placeholder={t('auth.enter_6digit', 'Enter 6-digit code')}
+                    dir={direction}
                   />
                 </div>
               )}
               
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Please wait..." : (
-                  showMFA ? 'Verify Code' : (isLogin ? "Sign In" : "Create Account")
+              <Button type="submit" className="w-full py-2 sm:py-3 text-sm sm:text-base" disabled={loading}>
+                {loading ? t('auth.please_wait', 'Please wait...') : (
+                  showMFA ? t('auth.verify_code', 'Verify Code') : (isLogin ? t('auth.sign_in', 'Sign In') : t('auth.create_account', 'Create Account'))
                 )}
               </Button>
               
@@ -657,9 +670,9 @@ const AuthPage = () => {
                   <button
                     type="button"
                     onClick={() => setIsLogin(!isLogin)}
-                    className="text-sm text-blue-600 hover:underline"
+                    className="text-xs sm:text-sm text-blue-600 hover:underline"
                   >
-                    {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                    {isLogin ? t('auth.no_account', "Don't have an account? Sign up") : t('auth.have_account', 'Already have an account? Sign in')}
                   </button>
                 </div>
               )}
