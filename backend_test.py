@@ -147,19 +147,21 @@ class StoryBridgeAPITester:
             return False
             
         headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
-        story_data = {
+        
+        # Use form data as expected by the endpoint
+        form_data = {
             "title": "Test Story by API",
-            "text": "This is a test story created via API testing. It has simple vocabulary and a quiz.",
+            "text": "This is a test story created via API testing. It has simple vocabulary like test and story and simple words. The test story has test content and test vocabulary. This test story is for test purposes with test data and test content.",
             "language": "en",
             "age_group": "4-6",
-            "vocabulary": ["test", "story", "simple"],
-            "quizzes": [
+            "vocabulary": json.dumps(["test", "story", "simple"]),
+            "quizzes": json.dumps([
                 {
                     "type": "true_false",
                     "question": "This is a test story?",
                     "answer": True
                 }
-            ]
+            ])
         }
         
         success, response = self.run_test(
@@ -167,8 +169,9 @@ class StoryBridgeAPITester:
             "POST",
             "stories",
             200,
-            data=story_data,
-            headers=headers
+            data=form_data,
+            headers=headers,
+            form_data=True
         )
         return success
 
