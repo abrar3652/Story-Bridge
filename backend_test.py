@@ -119,13 +119,19 @@ class StoryBridgeAPITester:
         )
         return success
 
-    def test_get_stories(self):
+    def test_get_stories(self, user_type="end_user"):
         """Test getting published stories"""
+        # Add authentication for getting stories
+        headers = {}
+        if user_type in self.tokens:
+            headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+            
         success, response = self.run_test(
-            "Get published stories",
+            f"Get published stories ({user_type})",
             "GET",
             "stories",
-            200
+            200,
+            headers=headers
         )
         if success and isinstance(response, list):
             self.stories = response
