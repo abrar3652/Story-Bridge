@@ -1040,7 +1040,7 @@ const StoryPlayer = ({ story, onComplete }) => {
   );
 };
 
-// Creator Dashboard with SVG Upload
+// Creator Dashboard with SVG Upload and complete translation support
 const CreatorDashboard = () => {
   const [stories, setStories] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -1057,6 +1057,8 @@ const CreatorDashboard = () => {
   
   const { toast } = useToast();
   const { isOnline } = useAuth();
+  const { t, i18n } = useTranslation();
+  const direction = getDirection(i18n.language);
 
   useEffect(() => {
     fetchCreatorStories();
@@ -1077,8 +1079,8 @@ const CreatorDashboard = () => {
     const validFiles = files.filter(file => {
       if (!file.type.includes('svg')) {
         toast({
-          title: "Invalid file type",
-          description: `${file.name} is not an SVG file`,
+          title: t('error.invalid_file_type', 'Invalid file type'),
+          description: t('error.not_svg', `${file.name} is not an SVG file`),
           variant: "destructive"
         });
         return false;
@@ -1086,8 +1088,8 @@ const CreatorDashboard = () => {
       
       if (file.size > 500 * 1024) {
         toast({
-          title: "File too large",
-          description: `${file.name} exceeds 500KB limit`,
+          title: t('error.file_too_large', 'File too large'),
+          description: t('error.exceeds_limit', `${file.name} exceeds 500KB limit`),
           variant: "destructive"
         });
         return false;
@@ -1098,8 +1100,8 @@ const CreatorDashboard = () => {
 
     if (uploadedImages.length + validFiles.length > 5) {
       toast({
-        title: "Too many images",
-        description: "Maximum 5 images allowed per story",
+        title: t('error.too_many_images', 'Too many images'),
+        description: t('error.max_5_images', 'Maximum 5 images allowed per story'),
         variant: "destructive"
       });
       return;
@@ -1125,8 +1127,8 @@ const CreatorDashboard = () => {
     
     if (!isOnline) {
       toast({
-        title: "Connection Required",
-        description: "You need an internet connection to submit stories",
+        title: t('error.connection_required', 'Connection Required'),
+        description: t('error.need_internet_submit', 'You need an internet connection to submit stories'),
         variant: "destructive",
       });
       return;
@@ -1157,8 +1159,8 @@ const CreatorDashboard = () => {
       if (!response.ok) throw new Error('Failed to create story');
       
       toast({
-        title: "Story created!",
-        description: "Your story has been saved as a draft.",
+        title: t('message.story_created', 'Story created!'),
+        description: t('message.story_draft_saved', 'Your story has been saved as a draft.'),
       });
       
       setFormData({title: '', text: '', language: 'en', age_group: '4-6', vocabulary: '', quizzes: ''});
@@ -1168,8 +1170,8 @@ const CreatorDashboard = () => {
     } catch (error) {
       console.error('Error submitting story:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to create story",
+        title: t('error.general', 'Error'),
+        description: error.message || t('error.create_story_failed', 'Failed to create story'),
         variant: "destructive",
       });
     }
@@ -1180,112 +1182,128 @@ const CreatorDashboard = () => {
       await axios.patch(`${API}/stories/${storyId}/submit`);
       
       toast({
-        title: "Story submitted!",
-        description: "Your story has been submitted for admin review.",
+        title: t('message.story_submitted', 'Story submitted!'),
+        description: t('message.submitted_for_review', 'Your story has been submitted for admin review.'),
       });
       
       fetchCreatorStories();
     } catch (error) {
       toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to submit story",
+        title: t('error.general', 'Error'),
+        description: error.response?.data?.detail || t('error.submit_failed', 'Failed to submit story'),
         variant: "destructive",
       });
     }
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold">My Stories</h2>
+    <div className={`p-4 sm:p-6 font-arabic ${direction === 'rtl' ? 'rtl' : ''}`} dir={direction}>
+      <div className={`mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${direction === 'rtl' ? 'sm:flex-row-reverse' : ''}`}>
+        <h2 className="text-xl sm:text-2xl font-bold">{t('dashboard.my_stories', 'My Stories')}</h2>
         <Button 
           onClick={() => setShowForm(true)}
-          className="bg-orange-500 hover:bg-orange-600"
+          className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto"
         >
           <Book className="w-4 h-4 mr-2" />
-          Create New Story
+          {t('stories.create_new', 'Create New Story')}
         </Button>
       </div>
 
       {showForm && (
-        <Card className="mb-6">
+        <Card className="mb-4 sm:mb-6">
           <CardHeader>
-            <CardTitle>Create New Story</CardTitle>
+            <CardTitle className={direction === 'rtl' ? 'text-right' : ''}>{t('stories.create_new', 'Create New Story')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               <div>
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="title" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>{t('stories.story_title', 'Title')}</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
                   required
+                  className={direction === 'rtl' ? 'text-right' : ''}
+                  dir={direction}
                 />
               </div>
               
               <div>
-                <Label htmlFor="text">Story Text</Label>
+                <Label htmlFor="text" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>{t('stories.story_text', 'Story Text')}</Label>
                 <Textarea
                   id="text"
                   value={formData.text}
                   onChange={(e) => setFormData({...formData, text: e.target.value})}
                   required
                   rows={6}
+                  className={direction === 'rtl' ? 'text-right' : ''}
+                  dir={direction}
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <Label htmlFor="language">Language</Label>
+                  <Label htmlFor="language" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>{t('settings.language', 'Language')}</Label>
                   <Select value={formData.language} onValueChange={(value) => setFormData({...formData, language: value})}>
-                    <SelectTrigger>
+                    <SelectTrigger className={direction === 'rtl' ? 'text-right' : ''}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="ar">Arabic</SelectItem>
+                      <SelectItem value="en">{t('language.english', 'English')}</SelectItem>
+                      <SelectItem value="ar">{t('language.arabic', 'Arabic')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div>
-                  <Label htmlFor="age_group">Age Group</Label>
+                  <Label htmlFor="age_group" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>
+                    {t('stories.age_group', 'Age Group')}
+                  </Label>
                   <Select value={formData.age_group} onValueChange={(value) => setFormData({...formData, age_group: value})}>
-                    <SelectTrigger>
+                    <SelectTrigger className={direction === 'rtl' ? 'text-right' : ''}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="4-6">Ages 4-6</SelectItem>
-                      <SelectItem value="7-10">Ages 7-10</SelectItem>
+                      <SelectItem value="4-6">{t('stories.ages_4_6', 'Ages 4-6')}</SelectItem>
+                      <SelectItem value="7-10">{t('stories.ages_7_10', 'Ages 7-10')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               
               <div>
-                <Label htmlFor="vocabulary">Vocabulary Words (comma-separated)</Label>
+                <Label htmlFor="vocabulary" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>
+                  {t('stories.vocabulary', 'Vocabulary Words (comma-separated)')}
+                </Label>
                 <Input
                   id="vocabulary"
                   value={formData.vocabulary}
                   onChange={(e) => setFormData({...formData, vocabulary: e.target.value})}
-                  placeholder="brave, fly, sparrow"
+                  placeholder={t('stories.vocab_placeholder', 'brave, fly, sparrow')}
+                  className={direction === 'rtl' ? 'text-right' : ''}
+                  dir={direction}
                 />
               </div>
               
               <div>
-                <Label htmlFor="quizzes">Quiz Questions (JSON format)</Label>
+                <Label htmlFor="quizzes" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>
+                  {t('stories.quizzes', 'Quiz Questions (JSON format)')}
+                </Label>
                 <Textarea
                   id="quizzes"
                   value={formData.quizzes}
                   onChange={(e) => setFormData({...formData, quizzes: e.target.value})}
-                  placeholder='[{"type": "true_false", "question": "The sparrow was brave?", "answer": true}]'
+                  placeholder={t('stories.quiz_placeholder', '[{"type": "true_false", "question": "The sparrow was brave?", "answer": true}]')}
                   rows={4}
+                  className={direction === 'rtl' ? 'text-right' : ''}
+                  dir={direction}
                 />
               </div>
               
               <div>
-                <Label htmlFor="images">SVG Images (max 5, 500KB each)</Label>
+                <Label htmlFor="images" className={`text-sm ${direction === 'rtl' ? 'text-right' : ''}`}>
+                  {t('stories.svg_images', 'SVG Images (max 5, 500KB each)')}
+                </Label>
                 <Input
                   id="images"
                   type="file"
@@ -1295,10 +1313,10 @@ const CreatorDashboard = () => {
                 />
                 
                 {uploadedImages.length > 0 && (
-                  <div className="mt-2 grid grid-cols-3 gap-2">
+                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {uploadedImages.map((img) => (
                       <div key={img.id} className="relative border rounded p-2">
-                        <p className="text-sm truncate">{img.name}</p>
+                        <p className={`text-xs truncate ${direction === 'rtl' ? 'text-right' : ''}`}>{img.name}</p>
                         <button
                           type="button"
                           onClick={() => setUploadedImages(prev => prev.filter(i => i.id !== img.id))}
@@ -1312,12 +1330,12 @@ const CreatorDashboard = () => {
                 )}
               </div>
               
-              <div className="flex space-x-4">
-                <Button type="submit" className="bg-green-500 hover:bg-green-600">
-                  Save as Draft
+              <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 ${direction === 'rtl' ? 'sm:flex-row-reverse' : ''}`}>
+                <Button type="submit" className="bg-green-500 hover:bg-green-600 w-full sm:w-auto">
+                  {t('stories.save_draft', 'Save as Draft')}
                 </Button>
-                <Button type="button" onClick={() => setShowForm(false)} variant="outline">
-                  Cancel
+                <Button type="button" onClick={() => setShowForm(false)} variant="outline" className="w-full sm:w-auto">
+                  {t('stories.cancel', 'Cancel')}
                 </Button>
               </div>
             </form>
@@ -1325,32 +1343,32 @@ const CreatorDashboard = () => {
         </Card>
       )}
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {stories.map((story) => (
           <Card key={story.id}>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-semibold text-lg">{story.title}</h3>
-                <Badge variant={story.status === 'published' ? 'default' : story.status === 'pending' ? 'secondary' : 'outline'}>
-                  {story.status}
+            <CardContent className="p-4 sm:p-6">
+              <div className={`flex justify-between items-start mb-3 sm:mb-4 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+                <h3 className={`font-semibold text-base sm:text-lg ${direction === 'rtl' ? 'text-right' : ''}`}>{story.title}</h3>
+                <Badge variant={story.status === 'published' ? 'default' : story.status === 'pending' ? 'secondary' : 'outline'} className="text-xs">
+                  {t(`status.${story.status}`, story.status)}
                 </Badge>
               </div>
               
-              <p className="text-gray-600 text-sm mb-4 line-clamp-3">{story.text.substring(0, 100)}...</p>
+              <p className={`text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-3 ${direction === 'rtl' ? 'text-right' : ''}`}>{story.text.substring(0, 100)}...</p>
               
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline">{story.language}</Badge>
-                  <Badge variant="outline">{story.age_group}</Badge>
+              <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${direction === 'rtl' ? 'sm:flex-row-reverse' : ''}`}>
+                <div className={`flex items-center gap-2 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+                  <Badge variant="outline" className="text-xs">{story.language}</Badge>
+                  <Badge variant="outline" className="text-xs">{story.age_group}</Badge>
                 </div>
                 
                 {story.status === 'draft' && (
                   <Button 
                     onClick={() => handleSubmitForReview(story.id)}
                     size="sm"
-                    className="bg-blue-500 hover:bg-blue-600"
+                    className="bg-blue-500 hover:bg-blue-600 w-full sm:w-auto text-xs"
                   >
-                    Submit for Review
+                    {t('stories.submit_review', 'Submit for Review')}
                   </Button>
                 )}
               </div>
