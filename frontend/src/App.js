@@ -1380,10 +1380,223 @@ const CreatorDashboard = () => {
   );
 };
 
+// Narration Form Component
+const NarrationForm = ({ story, onSuccess, onCancel }) => {
+  const [text, setText] = useState('');
+  const [audioFile, setAudioFile] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState(null);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioChunks, setAudioChunks] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          setAudioChunks(prev => [...prev, event.data]);
+        }
+      };
+      
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+        setRecordedAudio(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      setMediaRecorder(recorder);
+      setAudioChunks([]);
+      recorder.start();
+      setIsRecording(true);
+      
+      toast({
+        title: "Recording Started",
+        description: "Speak into your microphone to record narration",
+      });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast({
+        title: "Recording Error",
+        description: "Could not access microphone. Please check permissions.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      toast({
+        title: "Recording Stopped",
+        description: "Audio recorded successfully!",
+      });
+    }
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('audio/')) {
+        toast({
+          title: "Invalid File",
+          description: "Please select an audio file (MP3, WAV, etc.)",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File Too Large",
+          description: "Audio file must be less than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setAudioFile(file);
+      setRecordedAudio(null); // Clear recorded audio if file is uploaded
+      toast({
+        title: "File Selected",
+        description: `${file.name} selected for upload`,
+      });
+    }
+  };
+
+  const submitNarration = async () => {
+    if (!audioFile && !recordedAudio && !text.trim()) {
+      toast({
+        title: "Missing Content",
+        description: "Please add audio recording/file or text for the narration",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('story_id', story.id);
+      
+      if (text.trim()) {
+        formData.append('text', text.trim());
+      }
+      
+      if (audioFile) {
+        formData.append('audio', audioFile);
+      } else if (recordedAudio) {
+        formData.append('audio', recordedAudio, 'recorded_narration.mp3');
+      }
+
+      const response = await axios.post(`${API}/narrations`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast({
+        title: "Success!",
+        description: "Narration submitted successfully!",
+      });
+      
+      onSuccess();
+    } catch (error) {
+      console.error('Error submitting narration:', error);
+      toast({
+        title: "Submission Failed",
+        description: error.response?.data?.detail || "Failed to submit narration",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Story: {story.title}</h3>
+        <p className="text-sm text-gray-600 mb-4">{story.text.substring(0, 200)}...</p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <Label>Narration Text (Optional)</Label>
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Add any script notes or text for this narration..."
+            className="mt-1"
+          />
+        </div>
+
+        <div>
+          <Label>Audio Narration</Label>
+          <div className="mt-2 space-y-4">
+            {/* Recording Section */}
+            <div className="p-4 border rounded-lg">
+              <h4 className="font-medium mb-2">Record Audio</h4>
+              <div className="flex items-center space-x-2">
+                <Button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  variant={isRecording ? "destructive" : "default"}
+                  size="sm"
+                >
+                  <Mic className="w-4 h-4 mr-2" />
+                  {isRecording ? "Stop Recording" : "Start Recording"}
+                </Button>
+                {recordedAudio && (
+                  <Badge variant="outline">Audio Recorded</Badge>
+                )}
+              </div>
+            </div>
+
+            {/* File Upload Section */}
+            <div className="p-4 border rounded-lg">
+              <h4 className="font-medium mb-2">Upload Audio File</h4>
+              <Input
+                type="file"
+                accept="audio/*"
+                onChange={handleFileUpload}
+                className="mt-1"
+              />
+              {audioFile && (
+                <Badge variant="outline" className="mt-2">
+                  {audioFile.name}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-2">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={submitNarration} 
+          disabled={isSubmitting}
+          className="bg-orange-500 hover:bg-orange-600"
+        >
+          {isSubmitting ? "Submitting..." : "Submit Narration"}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 // Simplified Narrator Dashboard
 const NarratorDashboard = () => {
   const [stories, setStories] = useState([]);
   const [narrations, setNarrations] = useState([]);
+  const [selectedStory, setSelectedStory] = useState(null);
   
   useEffect(() => {
     fetchData();
@@ -1403,44 +1616,68 @@ const NarratorDashboard = () => {
     }
   };
 
+  const handleNarrationSuccess = () => {
+    setSelectedStory(null);
+    fetchData(); // Refresh data
+  };
+
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">Narrator Dashboard</h2>
       
-      <div className="grid md:grid-cols-2 gap-8">
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Stories Needing Narration</h3>
-          <div className="space-y-4">
-            {stories.filter(story => !narrations.some(n => n.story_id === story.id)).map((story) => (
-              <Card key={story.id}>
-                <CardContent className="p-4">
-                  <h4 className="font-semibold">{story.title}</h4>
-                  <p className="text-sm text-gray-600">{story.text.substring(0, 100)}...</p>
-                  <Button className="mt-2" size="sm">
-                    Add Narration
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+      {selectedStory ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add Narration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <NarrationForm
+              story={selectedStory}
+              onSuccess={handleNarrationSuccess}
+              onCancel={() => setSelectedStory(null)}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Stories Needing Narration</h3>
+            <div className="space-y-4">
+              {stories.filter(story => !narrations.some(n => n.story_id === story.id)).map((story) => (
+                <Card key={story.id}>
+                  <CardContent className="p-4">
+                    <h4 className="font-semibold">{story.title}</h4>
+                    <p className="text-sm text-gray-600">{story.text.substring(0, 100)}...</p>
+                    <Button 
+                      className="mt-2" 
+                      size="sm"
+                      onClick={() => setSelectedStory(story)}
+                    >
+                      Add Narration
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-4">My Narrations</h3>
+            <div className="space-y-4">
+              {narrations.map((narration) => (
+                <Card key={narration.id}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Narration #{narration.id.substring(0, 8)}</span>
+                      <Badge>{narration.status}</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
-        
-        <div>
-          <h3 className="text-lg font-semibold mb-4">My Narrations</h3>
-          <div className="space-y-4">
-            {narrations.map((narration) => (
-              <Card key={narration.id}>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Narration #{narration.id.substring(0, 8)}</span>
-                    <Badge>{narration.status}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
