@@ -107,7 +107,7 @@ class Narration(BaseModel):
     narrator_id: str
     audio_id: Optional[str] = None
     text: Optional[str] = None
-    status: str = "draft"  # draft, pending, published, rejected
+    status: str = "pending"  # draft, pending, published, rejected
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
