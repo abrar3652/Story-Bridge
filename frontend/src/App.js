@@ -241,29 +241,29 @@ const LandingPage = () => {
 
   // PWA Installation Guide
   const pwaGuide = {
-    title: "Install StoryBridge App",
-    subtitle: "Get the full app experience on your device",
+    title: t('pwa.title', 'Install StoryBridge App'),
+    subtitle: t('pwa.subtitle', 'Get the full app experience on your device'),
     steps: [
       { 
-        platform: "Android (Chrome)",
+        platform: t('pwa.android', 'Android (Chrome)'),
         icon: <Download className="w-5 h-5" />,
         steps: [
-          "Open StoryBridge in Chrome browser",
-          "Tap the menu (⋮) in top right corner", 
-          "Select 'Add to Home screen'",
-          "Tap 'Install' when prompted",
-          "Find StoryBridge icon on your home screen"
+          t('pwa.android.step1', 'Open StoryBridge in Chrome browser'),
+          t('pwa.android.step2', 'Tap the menu (⋮) in top right corner'),
+          t('pwa.android.step3', 'Select \'Add to Home screen\''),
+          t('pwa.android.step4', 'Tap \'Install\' when prompted'),
+          t('pwa.android.step5', 'Find StoryBridge icon on your home screen')
         ]
       },
       {
-        platform: "iOS (Safari)", 
+        platform: t('pwa.ios', 'iOS (Safari)'), 
         icon: <Download className="w-5 h-5" />,
         steps: [
-          "Open StoryBridge in Safari browser",
-          "Tap the share button (□↑) at the bottom",
-          "Scroll down and tap 'Add to Home Screen'",
-          "Tap 'Add' to confirm installation", 
-          "Launch from your home screen icon"
+          t('pwa.ios.step1', 'Open StoryBridge in Safari browser'),
+          t('pwa.ios.step2', 'Tap the share button (□↑) at the bottom'),
+          t('pwa.ios.step3', 'Scroll down and tap \'Add to Home Screen\''),
+          t('pwa.ios.step4', 'Tap \'Add\' to confirm installation'),
+          t('pwa.ios.step5', 'Launch from your home screen icon')
         ]
       }
     ]
@@ -272,32 +272,32 @@ const LandingPage = () => {
   // FAQ data
   const faqs = [
     {
-      question: "How does StoryBridge work offline?",
-      answer: "Once you download stories to your device, you can access them completely offline. Your progress, coins, and badges are saved locally and sync when you reconnect to the internet."
+      question: t('faq.offline.q', 'How does StoryBridge work offline?'),
+      answer: t('faq.offline.a', 'Once you download stories to your device, you can access them completely offline. Your progress, coins, and badges are saved locally and sync when you reconnect to the internet.')
     },
     {
-      question: "What is TPRS methodology?",
-      answer: "Teaching Proficiency through Reading and Storytelling (TPRS) uses compelling stories with repetitive vocabulary to help children naturally acquire language skills through context and engagement."
+      question: t('faq.tprs.q', 'What is TPRS methodology?'),
+      answer: t('faq.tprs.a', 'Teaching Proficiency through Reading and Storytelling (TPRS) uses compelling stories with repetitive vocabulary to help children naturally acquire language skills through context and engagement.')
     },
     {
-      question: "How do I earn coins and badges?",
-      answer: "You earn 10 coins for each completed story and 5 coins for each correct quiz answer. Badges are awarded for milestones like completing your first story (Story Starter) or learning 10 words (Word Wizard)."
+      question: t('faq.rewards.q', 'How do I earn coins and badges?'),
+      answer: t('faq.rewards.a', 'You earn 10 coins for each completed story and 5 coins for each correct quiz answer. Badges are awarded for milestones like completing your first story (Story Starter) or learning 10 words (Word Wizard).')
     },
     {
-      question: "Can I use StoryBridge in different languages?",
-      answer: "Yes! StoryBridge supports English and Arabic with full RTL (right-to-left) layout support. Stories are available in both languages for multilingual learning."
+      question: t('faq.languages.q', 'Can I use StoryBridge in different languages?'),
+      answer: t('faq.languages.a', 'Yes! StoryBridge supports English and Arabic with full RTL (right-to-left) layout support. Stories are available in both languages for multilingual learning.')
     },
     {
-      question: "How do I become a Story Creator or Narrator?",
-      answer: "Simply sign up with the Creator or Narrator role. Creators can write and submit stories, while Narrators add voice recordings to bring stories to life. All content goes through admin review."
+      question: t('faq.roles.q', 'How do I become a Story Creator or Narrator?'),
+      answer: t('faq.roles.a', 'Simply sign up with the Creator or Narrator role. Creators can write and submit stories, while Narrators add voice recordings to bring stories to life. All content goes through admin review.')
     },
     {
-      question: "Is StoryBridge suitable for children with learning disabilities?",
-      answer: "Yes! StoryBridge follows WCAG 2.1 accessibility guidelines with screen reader support, audio cues, large touch targets, and simple navigation designed for children with diverse needs."
+      question: t('faq.accessibility.q', 'Is StoryBridge suitable for children with learning disabilities?'),
+      answer: t('faq.accessibility.a', 'Yes! StoryBridge follows WCAG 2.1 accessibility guidelines with screen reader support, audio cues, large touch targets, and simple navigation designed for children with diverse needs.')
     },
     {
-      question: "How can NGOs partner with StoryBridge?", 
-      answer: "NGOs can access free platform usage, co-branded materials, priority support, and detailed analytics reports. Contact us through the partnership section in Settings for more information."
+      question: t('faq.ngo.q', 'How can NGOs partner with StoryBridge?'),
+      answer: t('faq.ngo.a', 'NGOs can access free platform usage, co-branded materials, priority support, and detailed analytics reports. Contact us through the partnership section in Settings for more information.')
     }
   ];
   
