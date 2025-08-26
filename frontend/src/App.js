@@ -198,52 +198,43 @@ const LandingPage = () => {
   const changeLanguage = (lang) => {
     i18n.changeLanguage(lang);
     document.dir = getDirection(lang);
+    document.documentElement.lang = lang;
+    localStorage.setItem('i18nextLng', lang);
   };
 
-  // How to Use data for different roles
+  // How to Use data for different roles (ADMIN REMOVED AS REQUESTED)
   const howToUseGuides = {
     end_user: {
-      title: "For Students, Parents & Teachers",
+      title: t('guide.end_user.title', 'For Students, Parents & Teachers'),
       icon: <User className="w-6 h-6" />,
       steps: [
-        { icon: <Book className="w-5 h-5" />, text: "Browse story library and choose age-appropriate stories" },
-        { icon: <Play className="w-5 h-5" />, text: "Listen to interactive audio stories with voice narration" },
-        { icon: <Trophy className="w-5 h-5" />, text: "Complete quizzes and learn new vocabulary words" },
-        { icon: <Coins className="w-5 h-5" />, text: "Earn coins and badges for story completion" },
-        { icon: <Download className="w-5 h-5" />, text: "Download stories for offline learning anywhere" }
+        { icon: <Book className="w-5 h-5" />, text: t('guide.end_user.step1', 'Browse story library and choose age-appropriate stories') },
+        { icon: <Play className="w-5 h-5" />, text: t('guide.end_user.step2', 'Listen to interactive audio stories with voice narration') },
+        { icon: <Trophy className="w-5 h-5" />, text: t('guide.end_user.step3', 'Complete quizzes and learn new vocabulary words') },
+        { icon: <Coins className="w-5 h-5" />, text: t('guide.end_user.step4', 'Earn coins and badges for story completion') },
+        { icon: <Download className="w-5 h-5" />, text: t('guide.end_user.step5', 'Download stories for offline learning anywhere') }
       ]
     },
     creator: {
-      title: "For Story Creators",
+      title: t('guide.creator.title', 'For Story Creators'),
       icon: <Book className="w-6 h-6" />,
       steps: [
-        { icon: <User className="w-5 h-5" />, text: "Sign up as a Story Creator and verify your account" },
-        { icon: <Book className="w-5 h-5" />, text: "Write engaging stories following TPRS methodology" },
-        { icon: <Globe className="w-5 h-5" />, text: "Add 3-5 vocabulary words repeated 3+ times in your story" },
-        { icon: <Check className="w-5 h-5" />, text: "Create interactive quizzes (true/false, multiple choice)" },
-        { icon: <Shield className="w-5 h-5" />, text: "Submit for admin review and await publication" }
+        { icon: <User className="w-5 h-5" />, text: t('guide.creator.step1', 'Sign up as a Story Creator and verify your account') },
+        { icon: <Book className="w-5 h-5" />, text: t('guide.creator.step2', 'Write engaging stories following TPRS methodology') },
+        { icon: <Globe className="w-5 h-5" />, text: t('guide.creator.step3', 'Add 3-5 vocabulary words repeated 3+ times in your story') },
+        { icon: <Check className="w-5 h-5" />, text: t('guide.creator.step4', 'Create interactive quizzes (true/false, multiple choice)') },
+        { icon: <Shield className="w-5 h-5" />, text: t('guide.creator.step5', 'Submit for admin review and await publication') }
       ]
     },
     narrator: {
-      title: "For Voice Narrators",
+      title: t('guide.narrator.title', 'For Voice Narrators'),
       icon: <Mic className="w-6 h-6" />,
       steps: [
-        { icon: <User className="w-5 h-5" />, text: "Register as a Voice Narrator with audio experience" },
-        { icon: <Book className="w-5 h-5" />, text: "Browse published stories that need narration" },
-        { icon: <Mic className="w-5 h-5" />, text: "Record high-quality audio or upload audio files" },
-        { icon: <Volume2 className="w-5 h-5" />, text: "Use voice-to-text features for script creation" },
-        { icon: <Shield className="w-5 h-5" />, text: "Submit narrations for admin approval" }
-      ]
-    },
-    admin: {
-      title: "For Administrators",
-      icon: <Shield className="w-6 h-6" />,
-      steps: [
-        { icon: <Users className="w-5 h-5" />, text: "Manage user accounts and system permissions" },
-        { icon: <Check className="w-5 h-5" />, text: "Review and approve story content and narrations" },
-        { icon: <BarChart3 className="w-5 h-5" />, text: "Monitor analytics and generate NGO reports" },
-        { icon: <Shield className="w-5 h-5" />, text: "Ensure content quality and TPRS compliance" },
-        { icon: <SettingsIcon className="w-5 h-5" />, text: "Configure platform settings and partnerships" }
+        { icon: <User className="w-5 h-5" />, text: t('guide.narrator.step1', 'Register as a Voice Narrator with audio experience') },
+        { icon: <Book className="w-5 h-5" />, text: t('guide.narrator.step2', 'Browse published stories that need narration') },
+        { icon: <Mic className="w-5 h-5" />, text: t('guide.narrator.step3', 'Record high-quality audio or upload audio files') },
+        { icon: <Volume2 className="w-5 h-5" />, text: t('guide.narrator.step4', 'Use voice-to-text features for script creation') },
+        { icon: <Shield className="w-5 h-5" />, text: t('guide.narrator.step5', 'Submit narrations for admin approval') }
       ]
     }
   };
