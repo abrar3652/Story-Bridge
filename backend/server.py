@@ -631,37 +631,6 @@ async def submit_story_for_review(story_id: str, current_user: User = Depends(ge
     
     return {"message": "Story submitted for review"}
 
-# Debug audio endpoint
-@api_router.get("/debug/audio/{audio_id}")
-async def debug_audio(audio_id: str):
-    try:
-        from bson import ObjectId
-        logger.info(f"Debug: Checking audio ID {audio_id}")
-        
-        # Check if file exists in fs.files
-        files_collection = db['fs.files']
-        file_doc = await files_collection.find_one({'_id': ObjectId(audio_id)})
-        
-        if not file_doc:
-            return {"error": "File not found in fs.files collection", "audio_id": audio_id}
-        
-        # Check if chunks exist
-        chunks_collection = db['fs.chunks']
-        chunks_count = await chunks_collection.count_documents({'files_id': ObjectId(audio_id)})
-        
-        return {
-            "audio_id": audio_id,
-            "file_exists": True,
-            "filename": file_doc.get("filename"),
-            "length": file_doc.get("length"),
-            "chunks_count": chunks_count,
-            "db_name": db.name
-        }
-        
-    except Exception as e:
-        logger.error(f"Debug error: {e}")
-        return {"error": str(e), "audio_id": audio_id}
-
 # Audio file serving
 @api_router.get("/audio/{audio_id}")
 async def get_audio(audio_id: str):
