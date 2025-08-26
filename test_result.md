@@ -358,6 +358,18 @@ test_plan:
         agent: "testing"
         comment: "COMPREHENSIVE ADMIN PENDING TESTING COMPLETED: ✅ /admin/pending endpoint working perfectly (200 OK), ✅ Returns correct data structure with 'stories' and 'narrations' arrays, ✅ Found 3 existing pending narrations in database (mix of audio/text content), ✅ Complete workflow tested successfully: story creation → submission → admin approval → narration creation → admin approval, ✅ Narrations default to 'pending' status correctly, ✅ Admin approval removes narrations from pending queue properly, ✅ Story audio_id field updated after narration approval. CONCLUSION: Backend admin functionality is fully operational. If frontend AdminDashboard not showing pending narrations, issue is in frontend rendering logic, not backend data retrieval."
 
+  - task: "Critical Workflow Investigation - Story Approval and Audio Issues"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CRITICAL WORKFLOW INVESTIGATION COMPLETED: Investigated reported issues: 1) Stories approved by admin not appearing in story library, 2) Stories not having audio when narrations approved, 3) Story player audio not working. COMPREHENSIVE TESTING RESULTS: ✅ Story approval endpoint /admin/content/story/{id}/approve working perfectly (changes status to 'published'), ✅ Approved stories DO appear in end user library (4 published stories confirmed visible), ✅ Narration approval endpoint /admin/content/narration/{id}/approve working perfectly (updates story audio_id), ✅ Stories DO have audio when narrations approved (3 stories with audio confirmed), ✅ Audio serving /audio/{audio_id} working perfectly (proper headers, content served), ✅ End user authentication and story access working correctly. CONCLUSION: All reported workflow issues are NOT present in backend - the system is working as designed. Issues may be in frontend components or admin workflow processes."
+
 agent_communication:
   - agent: "main"
     message: "INITIAL SETUP COMPLETED: Successfully updated all documentation and configuration files for StoryBridge PWA. Updated README.md with comprehensive project overview emphasizing TPRS methodology, mobile-first design, offline capabilities, and four user roles (End User, Creator, Narrator, Admin). Enhanced manifest.json with PWA shortcuts and low-connectivity optimizations. Updated HTML meta tags for better SEO and mobile optimization. Created robots.txt and sitemap.xml for search engine discoverability. Updated package.json with proper project metadata. Changed database name to reflect TPRS focus. All changes focused solely on descriptive text and configuration - no code features implemented as per task scope."
