@@ -47,6 +47,9 @@ const useAuth = () => {
   return context;
 };
 
+// Export useAuth for use in other components
+export { useAuth };
+
 // Enhanced Auth Provider with offline support
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
