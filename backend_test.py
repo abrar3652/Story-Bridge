@@ -257,6 +257,238 @@ class StoryBridgeAPITester:
             headers=headers,
             form_data=True
         )
+        
+        if success and 'narration' in response:
+            self.narrations.append(response['narration'])
+        
+        return success
+
+    def create_sample_mp3_file(self):
+        """Create a sample MP3 file for testing"""
+        # Create a minimal MP3 file (just headers, not actual audio)
+        mp3_header = b'\xff\xfb\x90\x00' + b'\x00' * 1000  # Minimal MP3 header + padding
+        return io.BytesIO(mp3_header)
+
+    def test_create_narration_with_audio(self, user_type="narrator"):
+        """Test creating a narration with audio file upload"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        if not self.stories:
+            print("❌ No stories available for narration test")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        
+        # Create sample MP3 file
+        audio_file = self.create_sample_mp3_file()
+        
+        form_data = {
+            "story_id": self.stories[0]['id'],
+            "text": "This is a test narration with audio file."
+        }
+        
+        files = {
+            "audio": ("test_narration.mp3", audio_file, "audio/mpeg")
+        }
+        
+        success, response = self.run_test(
+            f"Create narration with audio ({user_type})",
+            "POST",
+            "narrations",
+            200,
+            data=form_data,
+            headers=headers,
+            files=files,
+            form_data=True
+        )
+        
+        if success and 'narration' in response:
+            narration = response['narration']
+            self.narrations.append(narration)
+            if 'audio_id' in narration:
+                self.audio_ids.append(narration['audio_id'])
+                print(f"   Audio ID: {narration['audio_id']}")
+        
+        return success
+
+    def test_create_narration_large_file(self, user_type="narrator"):
+        """Test creating narration with file exceeding 5MB limit"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        if not self.stories:
+            print("❌ No stories available for narration test")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        
+        # Create large file (6MB)
+        large_audio = io.BytesIO(b'\xff\xfb\x90\x00' + b'\x00' * (6 * 1024 * 1024))
+        
+        form_data = {
+            "story_id": self.stories[0]['id'],
+            "text": "This should fail due to large file size."
+        }
+        
+        files = {
+            "audio": ("large_test.mp3", large_audio, "audio/mpeg")
+        }
+        
+        success, response = self.run_test(
+            f"Create narration with large file ({user_type}) - Should fail",
+            "POST",
+            "narrations",
+            400,  # Expecting 400 Bad Request
+            data=form_data,
+            headers=headers,
+            files=files,
+            form_data=True
+        )
+        
+        return success
+
+    def test_create_narration_invalid_file_type(self, user_type="narrator"):
+        """Test creating narration with invalid file type"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        if not self.stories:
+            print("❌ No stories available for narration test")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        
+        # Create text file instead of audio
+        text_file = io.BytesIO(b'This is not an audio file')
+        
+        form_data = {
+            "story_id": self.stories[0]['id'],
+            "text": "This should fail due to invalid file type."
+        }
+        
+        files = {
+            "audio": ("test.txt", text_file, "text/plain")
+        }
+        
+        success, response = self.run_test(
+            f"Create narration with invalid file type ({user_type}) - Should fail",
+            "POST",
+            "narrations",
+            400,  # Expecting 400 Bad Request
+            data=form_data,
+            headers=headers,
+            files=files,
+            form_data=True
+        )
+        
+        return success
+
+    def test_create_narration_non_narrator(self, user_type="end_user"):
+        """Test creating narration with non-narrator role - should fail"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        if not self.stories:
+            print("❌ No stories available for narration test")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        
+        form_data = {
+            "story_id": self.stories[0]['id'],
+            "text": "This should fail due to insufficient permissions."
+        }
+        
+        success, response = self.run_test(
+            f"Create narration with non-narrator role ({user_type}) - Should fail",
+            "POST",
+            "narrations",
+            403,  # Expecting 403 Forbidden
+            data=form_data,
+            headers=headers,
+            form_data=True
+        )
+        
+        return success
+
+    def test_create_narration_invalid_story(self, user_type="narrator"):
+        """Test creating narration with invalid story ID"""
+        if user_type not in self.tokens:
+            print(f"❌ No token for {user_type}")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+        
+        form_data = {
+            "story_id": "invalid-story-id-12345",
+            "text": "This should fail due to invalid story ID."
+        }
+        
+        success, response = self.run_test(
+            f"Create narration with invalid story ID ({user_type}) - Should fail",
+            "POST",
+            "narrations",
+            404,  # Expecting 404 Not Found
+            data=form_data,
+            headers=headers,
+            form_data=True
+        )
+        
+        return success
+
+    def test_get_audio_file(self):
+        """Test fetching audio files by audio_id"""
+        if not self.audio_ids:
+            print("❌ No audio IDs available for testing")
+            return False
+            
+        audio_id = self.audio_ids[0]
+        
+        # Test without authentication (audio serving should be public)
+        success, response = self.run_test(
+            f"Get audio file (ID: {audio_id})",
+            "GET",
+            f"audio/{audio_id}",
+            200
+        )
+        
+        return success
+
+    def test_get_audio_file_invalid_id(self):
+        """Test fetching audio with invalid ID - should return 404"""
+        success, response = self.run_test(
+            "Get audio file with invalid ID - Should fail",
+            "GET",
+            "audio/invalid-audio-id-12345",
+            404  # Expecting 404 Not Found
+        )
+        
+        return success
+
+    def test_get_stories_with_audio(self):
+        """Test that stories with audio_id are returned properly"""
+        success, response = self.run_test(
+            "Get stories with audio information",
+            "GET",
+            "stories",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            # Check if any stories have audio_id
+            stories_with_audio = [story for story in response if story.get('audio_id')]
+            print(f"   Found {len(stories_with_audio)} stories with audio")
+            
+            # Verify audio_id field is present and valid
+            for story in stories_with_audio:
+                if 'audio_id' in story and story['audio_id']:
+                    print(f"   Story '{story['title']}' has audio_id: {story['audio_id']}")
+        
         return success
 
     def test_get_narrator_narrations(self, user_type="narrator"):
