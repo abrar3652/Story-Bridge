@@ -1838,7 +1838,7 @@ const AdminDashboard = () => {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">Admin Dashboard</h2>
       
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <div>
           <h3 className="text-lg font-semibold mb-4">Pending Stories</h3>
           <div className="space-y-4">
@@ -1869,6 +1869,65 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             ))}
+            {pendingContent.stories.length === 0 && (
+              <p className="text-gray-500 text-center py-4">No pending stories</p>
+            )}
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Pending Narrations</h3>
+          <div className="space-y-4">
+            {pendingContent.narrations.map((narration) => (
+              <Card key={narration.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Mic className="w-4 h-4 text-blue-500" />
+                    <h4 className="font-semibold">Narration #{narration.id.substring(0, 8)}</h4>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600 mb-2">
+                    <strong>Story ID:</strong> {narration.story_id.substring(0, 8)}
+                  </div>
+                  
+                  {narration.text && (
+                    <p className="text-sm text-gray-600 mb-3">{narration.text.substring(0, 100)}...</p>
+                  )}
+                  
+                  <div className="flex items-center gap-2 mb-3">
+                    {narration.audio_id && (
+                      <Badge variant="outline" className="text-green-600">
+                        <Volume2 className="w-3 h-3 mr-1" />
+                        Audio File
+                      </Badge>
+                    )}
+                    <Badge variant="outline">Pending Review</Badge>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button 
+                      onClick={() => handleApprove('narration', narration.id)}
+                      size="sm" 
+                      className="bg-green-500 hover:bg-green-600"
+                    >
+                      <Check className="w-4 h-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button 
+                      onClick={() => handleReject('narration', narration.id)}
+                      size="sm" 
+                      variant="destructive"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Reject
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {pendingContent.narrations.length === 0 && (
+              <p className="text-gray-500 text-center py-4">No pending narrations</p>
+            )}
           </div>
         </div>
         
