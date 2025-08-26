@@ -708,7 +708,7 @@ const Dashboard = () => {
       case 'settings':
         return <Settings />;
       case 'progress':
-        return user?.role === 'end_user' ? <Progress /> : <div>Access denied</div>;
+        return user?.role === 'end_user' ? <ProgressPage /> : <div>Access denied</div>;
       default:
         return <div>Page not found</div>;
     }
