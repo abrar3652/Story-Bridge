@@ -786,7 +786,7 @@ const Dashboard = () => {
   );
 };
 
-// Simplified End User Dashboard
+// Simplified End User Dashboard with complete translation support
 const EndUserDashboard = () => {
   const [stories, setStories] = useState([]);
   const [selectedStory, setSelectedStory] = useState(null);
@@ -795,6 +795,8 @@ const EndUserDashboard = () => {
   const [badges, setBadges] = useState([]);
   
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
+  const direction = getDirection(i18n.language);
 
   useEffect(() => {
     fetchStories();
@@ -808,8 +810,8 @@ const EndUserDashboard = () => {
     } catch (error) {
       console.error('Error fetching stories:', error);
       toast({
-        title: "Error",
-        description: "Failed to load stories",
+        title: t('error.general', 'Error'),
+        description: t('error.fetch_stories', 'Failed to load stories'),
         variant: "destructive",
       });
     }
@@ -836,42 +838,42 @@ const EndUserDashboard = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Story Library</h2>
-        <div className="flex items-center space-x-4">
-          <div className="bg-yellow-100 px-4 py-2 rounded-full flex items-center">
-            <Coins className="w-5 h-5 text-yellow-600 mr-2" />
-            <span className="font-semibold">{totalCoins}</span>
+    <div className={`p-4 sm:p-6 font-arabic ${direction === 'rtl' ? 'rtl' : ''}`} dir={direction}>
+      <div className={`mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${direction === 'rtl' ? 'sm:flex-row-reverse' : ''}`}>
+        <h2 className="text-xl sm:text-2xl font-bold">{t('dashboard.story_library', 'Story Library')}</h2>
+        <div className={`flex flex-wrap items-center gap-2 sm:gap-4 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+          <div className="bg-yellow-100 px-3 sm:px-4 py-2 rounded-full flex items-center">
+            <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mr-1 sm:mr-2" />
+            <span className="font-semibold text-sm sm:text-base">{totalCoins}</span>
           </div>
           {badges.map((badge, index) => (
-            <Badge key={index} className="bg-purple-100 text-purple-800">
-              <Trophy className="w-4 h-4 mr-1" />
+            <Badge key={index} className="bg-purple-100 text-purple-800 text-xs sm:text-sm">
+              <Trophy className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
               {badge.badge_type}
             </Badge>
           ))}
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {stories.map((story) => (
           <Card key={story.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-2">{story.title}</h3>
-              <p className="text-gray-600 text-sm mb-4 line-clamp-3">{story.text.substring(0, 100)}...</p>
+            <CardContent className="p-4 sm:p-6">
+              <h3 className={`font-semibold text-base sm:text-lg mb-2 ${direction === 'rtl' ? 'text-right' : ''}`}>{story.title}</h3>
+              <p className={`text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-3 ${direction === 'rtl' ? 'text-right' : ''}`}>{story.text.substring(0, 100)}...</p>
               
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline">{story.language}</Badge>
-                  <Badge variant="outline">{story.age_group}</Badge>
+              <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${direction === 'rtl' ? 'sm:flex-row-reverse' : ''}`}>
+                <div className={`flex items-center gap-2 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+                  <Badge variant="outline" className="text-xs">{story.language}</Badge>
+                  <Badge variant="outline" className="text-xs">{story.age_group}</Badge>
                 </div>
                 
                 <Button 
                   onClick={() => setSelectedStory(story)}
-                  className="bg-orange-500 hover:bg-orange-600"
+                  className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto text-sm"
                 >
-                  <Play className="w-4 h-4 mr-2" />
-                  Play
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  {t('stories.play', 'Play')}
                 </Button>
               </div>
             </CardContent>
