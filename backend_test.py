@@ -476,13 +476,18 @@ class StoryBridgeAPITester:
         
         return success
 
-    def test_get_stories_with_audio(self):
+    def test_get_stories_with_audio(self, user_type="end_user"):
         """Test that stories with audio_id are returned properly"""
+        headers = {}
+        if user_type in self.tokens:
+            headers = {'Authorization': f'Bearer {self.tokens[user_type]}'}
+            
         success, response = self.run_test(
-            "Get stories with audio information",
+            f"Get stories with audio information ({user_type})",
             "GET",
             "stories",
-            200
+            200,
+            headers=headers
         )
         
         if success and isinstance(response, list):
