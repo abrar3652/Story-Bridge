@@ -891,11 +891,92 @@ const StoryPlayer = ({ story, onComplete }) => {
   const [quizAnswers, setQuizAnswers] = useState({});
   const [showQuiz, setShowQuiz] = useState(false);
   const [coins, setCoins] = useState(0);
+  const [audioError, setAudioError] = useState(false);
+  const [audioElement, setAudioElement] = useState(null);
   
   const { toast } = useToast();
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
+  // Initialize audio element when component mounts
+  useEffect(() => {
+    if (story.audio_id) {
+      const audio = new Audio(`${API}/audio/${story.audio_id}`);
+      
+      // Audio event handlers
+      audio.addEventListener('loadstart', () => {
+        console.log('Audio loading started');
+      });
+      
+      audio.addEventListener('canplay', () => {
+        console.log('Audio can start playing');
+        setAudioError(false);
+      });
+      
+      audio.addEventListener('error', (e) => {
+        console.error('Audio loading error:', e);
+        setAudioError(true);
+        setIsPlaying(false);
+        toast({
+          title: "Audio Error",
+          description: "Could not load audio for this story",
+          variant: "destructive"
+        });
+      });
+      
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+      });
+      
+      audio.addEventListener('pause', () => {
+        setIsPlaying(false);
+      });
+      
+      audio.addEventListener('play', () => {
+        setIsPlaying(true);
+      });
+      
+      setAudioElement(audio);
+      
+      // Cleanup on unmount
+      return () => {
+        audio.pause();
+        audio.src = '';
+      };
+    }
+  }, [story.audio_id, API, toast]);
+
+  const handlePlayPause = async () => {
+    if (!story.audio_id) {
+      toast({
+        title: "No Audio Available",
+        description: "This story hasn't been narrated yet",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!audioElement) {
+      toast({
+        title: "Audio Loading",
+        description: "Please wait for audio to load",
+      });
+      return;
+    }
+
+    try {
+      if (isPlaying) {
+        audioElement.pause();
+      } else {
+        await audioElement.play();
+      }
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setAudioError(true);
+      toast({
+        title: "Playback Error",
+        description: "Could not play audio. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleQuizAnswer = (answer) => {
@@ -970,6 +1051,17 @@ const StoryPlayer = ({ story, onComplete }) => {
               <Coins className="w-4 h-4 mr-1" />
               <span>{coins} coins</span>
             </div>
+            {story.audio_id && (
+              <Badge variant="outline" className="text-green-600">
+                <Volume2 className="w-3 h-3 mr-1" />
+                Audio Available
+              </Badge>
+            )}
+            {!story.audio_id && (
+              <Badge variant="outline" className="text-gray-500">
+                No Audio
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -981,9 +1073,15 @@ const StoryPlayer = ({ story, onComplete }) => {
               <div className="flex justify-center space-x-4">
                 <Button 
                   onClick={handlePlayPause}
-                  className="bg-orange-500 hover:bg-orange-600"
+                  className={`${story.audio_id && !audioError ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-400 cursor-not-allowed'}`}
+                  disabled={!story.audio_id || audioError}
                 >
                   {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                  <span className="ml-2">
+                    {!story.audio_id ? 'No Audio' : 
+                     audioError ? 'Audio Error' : 
+                     isPlaying ? 'Pause' : 'Play'}
+                  </span>
                 </Button>
                 
                 <Button 
@@ -993,6 +1091,12 @@ const StoryPlayer = ({ story, onComplete }) => {
                   Start Quiz
                 </Button>
               </div>
+              
+              {!story.audio_id && (
+                <p className="text-center text-gray-500 mt-4">
+                  This story hasn't been narrated yet. You can still read along and take the quiz!
+                </p>
+              )}
             </CardContent>
           </Card>
         ) : (
