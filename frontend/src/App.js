@@ -240,7 +240,7 @@ const LandingPage = () => {
         { icon: <Check className="w-5 h-5" />, text: "Review and approve story content and narrations" },
         { icon: <BarChart3 className="w-5 h-5" />, text: "Monitor analytics and generate NGO reports" },
         { icon: <Shield className="w-5 h-5" />, text: "Ensure content quality and TPRS compliance" },
-        { icon: <Settings className="w-5 h-5" />, text: "Configure platform settings and partnerships" }
+        { icon: <SettingsIcon className="w-5 h-5" />, text: "Configure platform settings and partnerships" }
       ]
     }
   };
