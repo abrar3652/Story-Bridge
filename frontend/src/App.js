@@ -400,34 +400,34 @@ const LandingPage = () => {
           </div>
         </section>
 
-        {/* PWA Installation Guide */}
-        <section className="mb-16">
+        {/* PWA Installation Guide - Mobile Responsive */}
+        <section className="mb-12 sm:mb-16">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-gray-800 px-4">
               {pwaGuide.title}
             </h2>
-            <p className="text-center text-gray-600 mb-8">{pwaGuide.subtitle}</p>
+            <p className="text-center text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base px-4">{pwaGuide.subtitle}</p>
             
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 max-w-4xl mx-auto">
               {pwaGuide.steps.map((platform, index) => (
                 <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-4 text-blue-600">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className={`flex items-center mb-3 sm:mb-4 text-blue-600 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
                       {platform.icon}
-                      <h3 className="ml-2 font-semibold text-lg">{platform.platform}</h3>
+                      <h3 className={`${direction === 'rtl' ? 'mr-2' : 'ml-2'} font-semibold text-base sm:text-lg`}>{platform.platform}</h3>
                     </div>
                     
-                    <ol className="space-y-2">
+                    <ol className="space-y-1 sm:space-y-2">
                       {platform.steps.map((step, stepIndex) => (
-                        <li key={stepIndex} className="flex items-start">
-                          <span className="bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mr-3 mt-0.5 flex-shrink-0">
+                        <li key={stepIndex} className={`flex items-start ${direction === 'rtl' ? 'flex-row-reverse text-right' : ''}`}>
+                          <span className={`bg-blue-100 text-blue-600 rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium ${direction === 'rtl' ? 'ml-2 sm:ml-3' : 'mr-2 sm:mr-3'} mt-0.5 flex-shrink-0`}>
                             {stepIndex + 1}
                           </span>
-                          <span className="text-gray-700 text-sm leading-relaxed">{step}</span>
+                          <span className="text-gray-700 text-xs sm:text-sm leading-relaxed">{step}</span>
                         </li>
                       ))}
                     </ol>
@@ -438,30 +438,31 @@ const LandingPage = () => {
           </motion.div>
         </section>
 
-        {/* FAQ Section */}
-        <section className="mb-16">
+        {/* FAQ Section - Mobile Responsive */}
+        <section className="mb-12 sm:mb-16">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
-              Frequently Asked Questions
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-gray-800 px-4">
+              {t('faq.title', 'Frequently Asked Questions')}
             </h2>
             
-            <div className="max-w-3xl mx-auto space-y-4">
+            <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
               {faqs.map((faq, index) => (
                 <Card key={index} className="overflow-hidden">
                   <CardContent className="p-0">
                     <button
                       onClick={() => setExpandedFAQ(expandedFAQ === index ? null : index)}
-                      className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+                      className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-gray-50 transition-colors ${direction === 'rtl' ? 'text-right' : ''}`}
                     >
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-semibold text-gray-800">{faq.question}</h3>
+                      <div className={`flex justify-between items-center ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+                        <h3 className="font-semibold text-gray-800 text-sm sm:text-base pr-4">{faq.question}</h3>
                         <motion.div
                           animate={{ rotate: expandedFAQ === index ? 180 : 0 }}
                           transition={{ duration: 0.2 }}
+                          className="flex-shrink-0"
                         >
                           ▼
                         </motion.div>
@@ -476,8 +477,8 @@ const LandingPage = () => {
                           exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <div className="px-6 pb-4">
-                            <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                          <div className={`px-4 sm:px-6 pb-3 sm:pb-4 ${direction === 'rtl' ? 'text-right' : ''}`}>
+                            <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{faq.answer}</p>
                           </div>
                         </motion.div>
                       )}
