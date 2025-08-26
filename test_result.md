@@ -301,10 +301,10 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Fix Narrator Add Narration Functionality"
+    - "Fix Story Audio Playback"
     - "Language Switching Functionality"
     - "Mobile Responsiveness"
-    - "Authentication Page Mobile & Language Support"
-    - "Dashboard Mobile & Language Support"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
