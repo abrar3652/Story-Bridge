@@ -684,13 +684,15 @@ const AuthPage = () => {
   );
 };
 
-// Main Dashboard Component
+// Main Dashboard Component with Mobile Responsiveness and RTL Support
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [currentView, setCurrentView] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const direction = getDirection(i18n.language);
 
   const handleLogout = async () => {
     await logout();
@@ -724,33 +726,52 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className={`min-h-screen bg-gray-50 flex font-arabic ${direction === 'rtl' ? 'rtl' : ''}`} dir={direction}>
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <Sidebar 
         currentView={currentView} 
         onViewChange={setCurrentView}
         isCollapsed={sidebarCollapsed}
         setIsCollapsed={setSidebarCollapsed}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Navigation */}
-        <nav className="bg-white shadow-sm border-b p-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-semibold text-gray-800">
-                {currentView.charAt(0).toUpperCase() + currentView.slice(1)}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Navigation - Mobile Responsive */}
+        <nav className="bg-white shadow-sm border-b p-3 sm:p-4">
+          <div className={`flex justify-between items-center ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-3 sm:gap-4 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+              {/* Mobile Menu Button */}
+              <button
+                className="md:hidden p-1 rounded-md hover:bg-gray-100"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                ☰
+              </button>
+              
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-800">
+                {t(`nav.${currentView}`, currentView.charAt(0).toUpperCase() + currentView.slice(1))}
               </h1>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-600 text-sm">
-                {user?.email} ({user?.role === 'end_user' ? 'Student' : user?.role})
+            <div className={`flex items-center gap-2 sm:gap-4 ${direction === 'rtl' ? 'flex-row-reverse' : ''}`}>
+              <span className="text-gray-600 text-xs sm:text-sm hidden sm:block">
+                {user?.email} ({user?.role === 'end_user' ? t('auth.role.end_user', 'Student') : user?.role})
               </span>
-              <Button variant="outline" onClick={handleLogout} size="sm">
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+              <Button variant="outline" onClick={handleLogout} size="sm" className="text-xs sm:text-sm">
+                <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">{t('nav.logout', 'Logout')}</span>
+                <span className="sm:hidden">Exit</span>
               </Button>
             </div>
           </div>
