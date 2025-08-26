@@ -197,6 +197,54 @@ frontend:
         agent: "main"
         comment: "AUTHENTICATION FULLY WORKING: Fixed critical bug in IndexedDB saveUserData method. Issue was async operations (await this.hashString()) inside object literal causing DataCloneError. Refactored to compute async values before object creation. Both login and signup tested and working perfectly with database storybridge_db."
 
+  - task: "Language Switching Functionality"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js, /app/frontend/src/lib/i18n.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Need to test language switching between English and Arabic on landing page and auth page. Verify RTL layout changes and text translations work properly."
+
+  - task: "Mobile Responsiveness"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Need to test mobile responsiveness on landing page, auth page, and dashboard. Verify all sections display properly on mobile viewport (375x667). Check that How to Use section shows only 3 cards (no admin card)."
+
+  - task: "Authentication Page Mobile & Language Support"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Need to test auth page mobile responsiveness and language switching functionality. Test both sign in and sign up forms."
+
+  - task: "Dashboard Mobile & Language Support"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js, /app/frontend/src/components/Sidebar.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Need to test dashboard mobile responsiveness and language switching if authentication works. Test with valid credentials."
+
   - task: "SVG Upload UI for Story Creation"
     implemented: false
     working: "NA"
