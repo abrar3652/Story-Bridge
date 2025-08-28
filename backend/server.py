@@ -650,7 +650,10 @@ async def get_audio(audio_id: str):
             headers={
                 "Content-Disposition": f"inline; filename=audio_{audio_id}",
                 "Accept-Ranges": "bytes",
-                "Cache-Control": "public, max-age=3600"
+                "Cache-Control": "public, max-age=3600",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "*"
             }
         )
     except Exception as e:
