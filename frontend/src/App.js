@@ -1000,7 +1000,14 @@ const StoryPlayer = ({ story, onComplete }) => {
   }, [story.audio_id, API, toast]);
 
   const handlePlayPause = async () => {
-    console.log('Play/Pause button clicked. Current state:', { isPlaying, audioElement, audioId: story.audio_id });
+    console.log('Play/Pause button clicked. Current state:', { 
+      isPlaying, 
+      audioElement: !!audioElement, 
+      audioId: story.audio_id,
+      audioSrc: audioElement?.src,
+      readyState: audioElement?.readyState,
+      networkState: audioElement?.networkState
+    });
     
     if (!story.audio_id) {
       console.log('No audio_id available for this story');
@@ -1027,15 +1034,38 @@ const StoryPlayer = ({ story, onComplete }) => {
         console.log('Pausing audio...');
         audioElement.pause();
       } else {
-        console.log('Playing audio...');
-        await audioElement.play();
+        console.log('Playing audio... readyState:', audioElement.readyState);
+        
+        // Check if audio is ready to play
+        if (audioElement.readyState >= 2) { // HAVE_CURRENT_DATA
+          await audioElement.play();
+        } else {
+          console.log('Audio not ready, waiting for loadeddata event');
+          // Wait for audio to be ready
+          audioElement.addEventListener('loadeddata', async () => {
+            try {
+              await audioElement.play();
+            } catch (playError) {
+              console.error('Error playing audio after loadeddata:', playError);
+              setAudioError(true);
+              toast({
+                title: "Playback Error",
+                description: "Could not play audio. Please try again.",
+                variant: "destructive"
+              });
+            }
+          }, { once: true });
+          
+          // Also try to load the audio again
+          audioElement.load();
+        }
       }
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.error('Error in handlePlayPause:', error);
       setAudioError(true);
       toast({
         title: "Playback Error",
-        description: "Could not play audio. Please try again.",
+        description: `Audio playback failed: ${error.message}`,
         variant: "destructive"
       });
     }
