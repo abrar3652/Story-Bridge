@@ -154,7 +154,7 @@ class StoryBridgeAPITester:
             "text": "This is a test story created via API testing. It has test vocabulary like test and story and test words. The test story has test content and test vocabulary. This test story is for test purposes with test data and test content. The test story uses test words repeatedly for test validation.",
             "language": "en",
             "age_group": "4-6",
-            "vocabulary": json.dumps(["test", "story", "simple"]),
+            "vocabulary": json.dumps(["test", "story", "test"]),
             "quizzes": json.dumps([
                 {
                     "type": "true_false",
