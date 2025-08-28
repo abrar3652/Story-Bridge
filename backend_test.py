@@ -151,7 +151,7 @@ class StoryBridgeAPITester:
         # Use form data as expected by the endpoint
         form_data = {
             "title": "Test Story by API",
-            "text": "This is a test story created via API testing. It has simple vocabulary like test and story and simple words. The test story has test content and test vocabulary. This test story is for test purposes with test data and test content.",
+            "text": "This is a test story created via API testing. It has test vocabulary like test and story and test words. The test story has test content and test vocabulary. This test story is for test purposes with test data and test content. The test story uses test words repeatedly for test validation.",
             "language": "en",
             "age_group": "4-6",
             "vocabulary": json.dumps(["test", "story", "simple"]),
