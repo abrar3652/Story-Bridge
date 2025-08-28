@@ -208,7 +208,7 @@ class StoryBridgeAPITester:
             "story_id": self.stories[0]['id'],
             "completed": True,
             "time_spent": 120,
-            "vocabulary_learned": ["brave", "sparrow"],
+            "vocabulary_learned": [{"word": "brave", "learned": True, "repetitions": 3}, {"word": "sparrow", "learned": True, "repetitions": 3}],
             "quiz_results": [{"question": 1, "correct": True}],
             "coins_earned": 15,
             "badges_earned": ["Story Starter"]
