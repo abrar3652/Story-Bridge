@@ -911,11 +911,21 @@ const StoryPlayer = ({ story, onComplete }) => {
     if (story.audio_id) {
       const audioUrl = `${API}/audio/${story.audio_id}`;
       console.log('Creating audio element with URL:', audioUrl);
-      const audio = new Audio(audioUrl);
+      
+      // Create audio element with explicit attributes
+      const audio = new Audio();
+      
+      // Set audio attributes for better compatibility
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous'; // Handle CORS
       
       // Audio event handlers
       audio.addEventListener('loadstart', () => {
         console.log('Audio loading started for:', audioUrl);
+      });
+      
+      audio.addEventListener('loadedmetadata', () => {
+        console.log('Audio metadata loaded, duration:', audio.duration);
       });
       
       audio.addEventListener('canplay', () => {
@@ -924,8 +934,25 @@ const StoryPlayer = ({ story, onComplete }) => {
       });
       
       audio.addEventListener('error', (e) => {
-        console.error('Audio loading error:', e);
-        console.error('Failed audio URL:', audioUrl);
+        console.error('Audio loading error details:', {
+          error: e,
+          audioError: audio.error,
+          networkState: audio.networkState,
+          readyState: audio.readyState,
+          url: audioUrl
+        });
+        
+        // More detailed error handling
+        if (audio.error) {
+          const errorMessages = {
+            1: 'MEDIA_ERR_ABORTED - The fetching process was stopped',
+            2: 'MEDIA_ERR_NETWORK - Network error occurred',
+            3: 'MEDIA_ERR_DECODE - Error occurred while decoding',
+            4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - Audio format not supported'
+          };
+          console.error('Audio error code:', audio.error.code, '-', errorMessages[audio.error.code]);
+        }
+        
         setAudioError(true);
         setIsPlaying(false);
         toast({
@@ -950,15 +977,25 @@ const StoryPlayer = ({ story, onComplete }) => {
         setIsPlaying(true);
       });
       
+      // Set the source after all event listeners are attached
+      audio.src = audioUrl;
+      
+      // Force load the audio
+      audio.load();
+      
       setAudioElement(audio);
       
       // Cleanup on unmount
       return () => {
-        audio.pause();
-        audio.src = '';
+        if (audio) {
+          audio.pause();
+          audio.removeAttribute('src');
+          audio.load();
+        }
       };
     } else {
       console.log('Story has no audio_id, no audio will be available');
+      setAudioError(false);
     }
   }, [story.audio_id, API, toast]);
 
